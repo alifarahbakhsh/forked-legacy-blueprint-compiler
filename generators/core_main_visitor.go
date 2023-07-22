@@ -69,12 +69,10 @@ func (v *MainVisitor) modifySpecModFile() {
 	}
 	f.Module.Mod.Path = "spec"
 	f.Module.Syntax.Token = []string{"module", "spec"}
-	/*
-		err = f.AddRequire("gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler", "v1.0.0")
-		if err != nil {
-			v.logger.Fatal(err)
-		}
-	*/
+	err = f.AddRequire("gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler", "v0.0.1")
+	if err != nil {
+		v.logger.Fatal(err)
+	}
 	bytes, err := f.Format()
 	if err != nil {
 		v.logger.Fatal(err)
@@ -205,12 +203,10 @@ func (v *MainVisitor) generateModFile(ctr_dir string, n *DockerContainerNode) {
 	if err != nil {
 		v.logger.Fatal(err)
 	}
-	/*
-		err = f.AddRequire("gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler", "v0.0.0")
-		if err != nil {
-			v.logger.Fatal(err)
-		}
-	*/
+	err = f.AddRequire("gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler", "v0.0.1")
+	if err != nil {
+		v.logger.Fatal(err)
+	}
 	err = f.AddRequire("spec", "v1.0.0")
 	if err != nil {
 		v.logger.Fatal(err)
