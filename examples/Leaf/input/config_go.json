@@ -1,0 +1,37 @@
+{
+    "app_name" : "leaf",
+    "src_dir" : "examples/Leaf/input/input_go",
+    "output_dir" : "examples/Leaf/output_go",
+    "wiring_file" : "examples/Leaf/wiring/instances.py",
+    "target" : "go",
+    "addresses": [
+        {
+            "name" : "leafService",
+            "address" : "leafService",
+            "port" : 9500,
+            "hostname":"pinky02"
+        },
+        {
+            "name" : "nonleafService",
+            "address" : "nonleafService",
+            "port" : 9501,
+            "hostname":"pinky04"
+        },
+        {
+            "name": "jaegerTracer",
+            "address" : "jaegerTracer",
+            "port": 14268,
+            "hostname":"pinky05"
+        },
+        {
+            "name": "xtracer",
+            "address": "xtrace-server",
+            "port": 5563,
+            "hostname":"pinky06"
+        }
+    ],
+    "inventory":[
+        {"hostname": "pinky05", "is_build_node": true},
+        {"hostname": "pink04"}
+    ]
+}

@@ -1,0 +1,17 @@
+---
+- hosts: all
+  tasks:
+    - debug:
+        msg: Removing old installations..
+
+- name: Run cleanup play
+  import_playbook: cleanup_compose.yaml
+
+- hosts: all
+  tasks:
+    - name: Run Docker-Compose setup
+      get_url: 
+        url : https://github.com/docker/compose/releases/download/1.29.0/docker-compose-Linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: 'u+x,g+x'
+      when: dc_inst_status.rc > 0

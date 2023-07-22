@@ -1,0 +1,76 @@
+---
+- hosts: registry
+  vars:
+    secure: no
+  tasks:
+    - name: Indicate selected host
+      debug:
+        msg: "The registry host is: {{ inventory_hostname }}"
+      
+    - name: Get info from docker daemon
+      community.docker.docker_container_info:
+        name: registry
+      register: registry_container
+
+    - name: Indicate registry status
+      debug:
+        msg: Registry is {{registry_container.container}}
+        
+
+    - name: Attempt restart if registry container exists but has stopped
+      community.docker.docker_container:
+        name: registry
+        restart: yes
+      when: 
+        - registry_container.exists 
+        - registry_container.container['State']['Status'] != "running"
+        
+    - name: Run registry setup from scratch in selected node
+      block:
+        
+        - name: Start registry container
+          command: docker run -d -p 5000:5000 --restart=always -v /mnt/registry/:/var/lib/registry --name registry registry:2 
+          when: 
+            - not secure
+
+        - name: Generate and store CA
+          command: openssl req -x509 -newkey rsa:4096 -keyout key.pem -out /certs/registry.crt -sha256 -days 365
+          when: 
+            - secure
+
+        - name: Start registry container with signed certificate.
+          command: docker run -d -p 5000:5000 --restart=always --name -v /mnt/registry/:/var/lib/registry -v /certs:/certs -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt registry registry:2
+          when: 
+            - secure
+      when: not registry_container.exists
+
+- hosts: all
+  vars:
+    secure: no
+  tasks:
+    - name: Add insecure registries
+      block:
+        - name: Define insecure registry
+          set_fact: 
+            daemon_config: "{ \"insecure-registries\" : [ \"{{groups['registry'][0]}}:5000\" ] }"
+      
+        - name: Create daemon file
+          copy:
+            content: "{{ daemon_config }}"
+            dest: /etc/docker/daemon.json
+            mode: "u+x,g+x"
+
+        - name: Restart daemon with new registry config
+          shell: |
+            systemctl daemon-reload
+            
+            systemctl restart docker
+            
+            exit 0
+          register: res
+
+        - name: Report daemon status
+          debug:
+            msg: "{{ res.rc }}"
+      when: 
+        - not secure

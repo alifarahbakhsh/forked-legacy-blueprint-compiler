@@ -1,0 +1,24 @@
+{
+    "app_name" : "leaf",
+    "src_dir" : "examples/Leaf/input/input_go",
+    "output_dir" : "examples/Leaf/output_go",
+    "wiring_file" : "examples/Leaf/wiring/instances_lb.py",
+    "target" : "go",
+    "addresses": [
+        {
+            "name" : "leafService",
+            "address" : "leafService",
+            "port" : 9500
+        },
+        {
+            "name" : "nonleafService",
+            "address" : "nonleafService",
+            "port" : 9501
+        },
+        {
+            "name": "leafServiceReplica",
+            "address": "leafServiceReplica",
+            "port": 9502
+        }
+    ]
+}

@@ -1,0 +1,429 @@
+{
+    "children": [
+        {
+            "children": [
+                {
+                    "abstract_type": "Tracer",
+                    "actual_type": "JaegerTracer",
+                    "arguments": [],
+                    "children": [],
+                    "client_modifier": [],
+                    "name": "jaegerTracer",
+                    "server_modifiers": [
+                        {
+                            "modifier_params": [
+                                {
+                                    "client_modifiers": [],
+                                    "client_node": "'docker'",
+                                    "isservice": false,
+                                    "keyword_name": "framework",
+                                    "name": null
+                                },
+                                {
+                                    "client_modifiers": [],
+                                    "client_node": "True",
+                                    "isservice": false,
+                                    "keyword_name": "public_ports",
+                                    "name": null
+                                }
+                            ],
+                            "modifier_type": "Deployer"
+                        }
+                    ]
+                }
+            ],
+            "name": "container1"
+        },
+        {
+            "children": [
+                {
+                    "abstract_type": "XTracer",
+                    "actual_type": "XTracerImpl",
+                    "arguments": [],
+                    "children": [],
+                    "client_modifier": [],
+                    "name": "xtracer",
+                    "server_modifiers": [
+                        {
+                            "modifier_params": [
+                                {
+                                    "client_modifiers": [],
+                                    "client_node": "'docker'",
+                                    "isservice": false,
+                                    "keyword_name": "framework",
+                                    "name": null
+                                },
+                                {
+                                    "client_modifiers": [],
+                                    "client_node": "True",
+                                    "isservice": false,
+                                    "keyword_name": "public_ports",
+                                    "name": null
+                                }
+                            ],
+                            "modifier_type": "Deployer"
+                        }
+                    ]
+                }
+            ],
+            "name": "container2"
+        },
+        {
+            "children": [
+                {
+                    "abstract_type": "MetricCollector",
+                    "actual_type": "LocalMetricCollector",
+                    "arguments": [
+                        {
+                            "client_modifiers": [],
+                            "client_node": "'latency.csv'",
+                            "isservice": false,
+                            "keyword_name": "filename",
+                            "name": null
+                        }
+                    ],
+                    "children": [],
+                    "client_modifier": [],
+                    "name": "localCollector",
+                    "server_modifiers": [
+                        {
+                            "modifier_params": [
+                                {
+                                    "client_modifiers": [],
+                                    "client_node": "'docker'",
+                                    "isservice": false,
+                                    "keyword_name": "framework",
+                                    "name": null
+                                },
+                                {
+                                    "client_modifiers": [],
+                                    "client_node": "True",
+                                    "isservice": false,
+                                    "keyword_name": "public_ports",
+                                    "name": null
+                                }
+                            ],
+                            "modifier_type": "Deployer"
+                        }
+                    ]
+                }
+            ],
+            "name": "container3"
+        },
+        {
+            "children": [
+                {
+                    "abstract_type": "Process",
+                    "children": [
+                        {
+                            "abstract_type": "Service",
+                            "actual_type": "LeafServiceImpl",
+                            "arguments": [],
+                            "children": [],
+                            "client_modifier": [
+                                {
+                                    "modifier_params": [
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "100",
+                                            "isservice": false,
+                                            "keyword_name": "max_clients",
+                                            "name": null
+                                        }
+                                    ],
+                                    "modifier_type": "ClientPool"
+                                },
+                                {
+                                    "modifier_params": [
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "5",
+                                            "isservice": false,
+                                            "keyword_name": "max_retries",
+                                            "name": null
+                                        }
+                                    ],
+                                    "modifier_type": "Retry"
+                                }
+                            ],
+                            "name": "leafService",
+                            "server_modifiers": [
+                                {
+                                    "modifier_params": [
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "jaegerTracer",
+                                            "isservice": true,
+                                            "keyword_name": "tracer",
+                                            "name": "jaegerTracer"
+                                        },
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "'LeafService'",
+                                            "isservice": false,
+                                            "keyword_name": "service_name",
+                                            "name": null
+                                        },
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "1",
+                                            "isservice": false,
+                                            "keyword_name": "sampling_rate",
+                                            "name": null
+                                        }
+                                    ],
+                                    "modifier_type": "TracerModifier"
+                                },
+                                {
+                                    "modifier_params": [
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "'grpc'",
+                                            "isservice": false,
+                                            "keyword_name": "framework",
+                                            "name": null
+                                        },
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "'1s'",
+                                            "isservice": false,
+                                            "keyword_name": "timeout",
+                                            "name": null
+                                        }
+                                    ],
+                                    "modifier_type": "RPCServer"
+                                },
+                                {
+                                    "modifier_params": [
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "'docker'",
+                                            "isservice": false,
+                                            "keyword_name": "framework",
+                                            "name": null
+                                        },
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "True",
+                                            "isservice": false,
+                                            "keyword_name": "public_ports",
+                                            "name": null
+                                        }
+                                    ],
+                                    "modifier_type": "Deployer"
+                                },
+                                {
+                                    "modifier_params": [
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "localCollector",
+                                            "isservice": true,
+                                            "keyword_name": "collector",
+                                            "name": "localCollector"
+                                        },
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "['latency']",
+                                            "isservice": false,
+                                            "keyword_name": "metrics",
+                                            "name": null
+                                        }
+                                    ],
+                                    "modifier_type": "MetricModifier"
+                                },
+                                {
+                                    "modifier_params": [
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "xtracer",
+                                            "isservice": true,
+                                            "keyword_name": "tracer",
+                                            "name": "xtracer"
+                                        }
+                                    ],
+                                    "modifier_type": "XTraceModifier"
+                                },
+                                {
+                                    "modifier_params": [
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "5",
+                                            "isservice": false,
+                                            "keyword_name": "num_replicas",
+                                            "name": null
+                                        }
+                                    ],
+                                    "modifier_type": "PlatformReplication"
+                                }
+                            ]
+                        }
+                    ],
+                    "name": "Proc1"
+                }
+            ],
+            "name": "container4"
+        },
+        {
+            "children": [
+                {
+                    "abstract_type": "Process",
+                    "children": [
+                        {
+                            "abstract_type": "Service",
+                            "actual_type": "NonLeafServiceImpl",
+                            "arguments": [
+                                {
+                                    "client_modifiers": [],
+                                    "client_node": "leafService",
+                                    "isservice": true,
+                                    "keyword_name": "leafService",
+                                    "name": "leafService"
+                                }
+                            ],
+                            "children": [],
+                            "client_modifier": [
+                                {
+                                    "modifier_params": [
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "100",
+                                            "isservice": false,
+                                            "keyword_name": "max_clients",
+                                            "name": null
+                                        }
+                                    ],
+                                    "modifier_type": "ClientPool"
+                                },
+                                {
+                                    "modifier_params": [
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "5",
+                                            "isservice": false,
+                                            "keyword_name": "max_retries",
+                                            "name": null
+                                        }
+                                    ],
+                                    "modifier_type": "Retry"
+                                }
+                            ],
+                            "name": "nonleafService",
+                            "server_modifiers": [
+                                {
+                                    "modifier_params": [
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "jaegerTracer",
+                                            "isservice": true,
+                                            "keyword_name": "tracer",
+                                            "name": "jaegerTracer"
+                                        },
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "'NonLeafService'",
+                                            "isservice": false,
+                                            "keyword_name": "service_name",
+                                            "name": null
+                                        },
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "1",
+                                            "isservice": false,
+                                            "keyword_name": "sampling_rate",
+                                            "name": null
+                                        }
+                                    ],
+                                    "modifier_type": "TracerModifier"
+                                },
+                                {
+                                    "modifier_params": [
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "'grpc'",
+                                            "isservice": false,
+                                            "keyword_name": "framework",
+                                            "name": null
+                                        },
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "'1s'",
+                                            "isservice": false,
+                                            "keyword_name": "timeout",
+                                            "name": null
+                                        }
+                                    ],
+                                    "modifier_type": "RPCServer"
+                                },
+                                {
+                                    "modifier_params": [
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "'docker'",
+                                            "isservice": false,
+                                            "keyword_name": "framework",
+                                            "name": null
+                                        },
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "True",
+                                            "isservice": false,
+                                            "keyword_name": "public_ports",
+                                            "name": null
+                                        }
+                                    ],
+                                    "modifier_type": "Deployer"
+                                },
+                                {
+                                    "modifier_params": [
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "localCollector",
+                                            "isservice": true,
+                                            "keyword_name": "collector",
+                                            "name": "localCollector"
+                                        },
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "['latency']",
+                                            "isservice": false,
+                                            "keyword_name": "metrics",
+                                            "name": null
+                                        }
+                                    ],
+                                    "modifier_type": "MetricModifier"
+                                },
+                                {
+                                    "modifier_params": [
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "xtracer",
+                                            "isservice": true,
+                                            "keyword_name": "tracer",
+                                            "name": "xtracer"
+                                        }
+                                    ],
+                                    "modifier_type": "XTraceModifier"
+                                },
+                                {
+                                    "modifier_params": [
+                                        {
+                                            "client_modifiers": [],
+                                            "client_node": "5",
+                                            "isservice": false,
+                                            "keyword_name": "num_replicas",
+                                            "name": null
+                                        }
+                                    ],
+                                    "modifier_type": "PlatformReplication"
+                                }
+                            ]
+                        }
+                    ],
+                    "name": "Proc1"
+                }
+            ],
+            "name": "container5"
+        }
+    ],
+    "name": "root"
+}

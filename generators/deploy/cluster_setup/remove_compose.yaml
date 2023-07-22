@@ -1,0 +1,12 @@
+---
+- hosts: all
+  tasks:
+    - name: Check if Docker-Compose is installed already
+      command: "docker-compose -v"
+      register: dc_inst_status
+      ignore_errors: yes
+
+    - name: Remove Docker-Compose
+      shell: |
+        rm $(which docker-compose)
+      when: dc_inst_status.rc == 0
