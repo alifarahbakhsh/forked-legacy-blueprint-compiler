@@ -1,0 +1,20 @@
+{
+    "app_name" : "leaf",
+    "src_dir" : "examples/Leaf/input/input_go",
+    "output_dir" : "examples/Leaf/output_go_allinone",
+    "wiring_file" : "examples/Leaf/wiring/instances_all_in_one.py",
+    "target" : "go",
+    "addresses": [
+        {
+            "name" : "leafService",
+            "address" : "leafService",
+            "port" : 9500
+        },
+        {
+            "name" : "nonleafService",
+            "address" : "nonleafService",
+            "port" : 9501
+        }
+    ],
+    "inventory":[]
+}

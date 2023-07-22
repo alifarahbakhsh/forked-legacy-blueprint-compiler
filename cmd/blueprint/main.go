@@ -31,7 +31,7 @@ func main() {
 		logger.SetOutput(ioutil.Discard)
 	}
 
-	bar := progressbar.Default(16)
+	bar := progressbar.Default(17)
 
 	config, err := parser.ParseConfig(configFile)
 	if err != nil {
@@ -102,9 +102,13 @@ func main() {
 	generator.RootNode.Accept(specWriterVisitor)
 	bar.Add(1)
 
+	localServicesInfoCollectorVisitor := generators.NewLocalServicesInfoCollectorVisitor(logger)
+	generator.RootNode.Accept(localServicesInfoCollectorVisitor)
+	bar.Add(1)
+
 	depgenfactory := deploy.GetDepGenFactory()
 	// Generate main functions, run scripts, container config files
-	mainVisitor := generators.NewMainVisitor(logger, config.OutDir, specParser.PathPkgs, specParser.Implementations, config.SrcDir, depgenfactory, addrCollectorVisitor.Addrs, config.Inventory, generateVisitor.Frameworks, depGraph)
+	mainVisitor := generators.NewMainVisitor(logger, config.OutDir, specParser.PathPkgs, specParser.Implementations, config.SrcDir, depgenfactory, addrCollectorVisitor.Addrs, config.Inventory, generateVisitor.Frameworks, depGraph, localServicesInfoCollectorVisitor.LocalServiceInfos)
 	generator.RootNode.Accept(mainVisitor)
 	bar.Add(1)
 

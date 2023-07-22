@@ -30,6 +30,11 @@ class ModifierInfo:
         self.modifier_type = modifier_type
         self.modifier_params = modifier_params
 
+class ProcessInfo:
+    def __init__(self, name, instances) -> None:
+        self.name = name
+        self.instances = instances
+
 class ModifierListInfo:
     def __init__(self, list_name, value_node):
         self.name = list_name

@@ -165,6 +165,7 @@ type ServiceNode struct {
 	Name                string
 	Children            []Node
 	Type                string
+	AbstractType        string
 	Params              []Parameter
 	ClientModifiers     []Modifier
 	ServerModifiers     []Modifier
@@ -292,7 +293,7 @@ func (g *Generator) convert_detail_node(node parser.DetailNode) (Node, *parser.M
 			}
 		}
 		return &ProcessNode{Name: node.Name, Children: children}, &deployer_node
-	} else if node.AbsType == "Service" || node.AbsType == "QueueService" {
+	} else if node.AbsType == "Service" || node.AbsType == "QueueService" || strings.HasSuffix(node.AbsType, "Service") {
 		var params []Parameter
 		var cmodifiers []Modifier
 		var smodifiers []Modifier
@@ -320,11 +321,11 @@ func (g *Generator) convert_detail_node(node parser.DetailNode) (Node, *parser.M
 		} else {
 			g.logger.Fatal("Implementation info not found for", node.Type)
 		}
-		snode := ServiceNode{Name: node.Name, Type: node.Type, Params: params, ClientModifiers: cmodifiers, ServerModifiers: smodifiers, ASTServerNodes: serverASTNodes, ParamClientNodes: make(map[string][]*ServiceImplInfo), ModifierClientNodes: make(map[string][]*ServiceImplInfo), DepInfo: deploy.NewDeployInfo()}
-		if node.AbsType == "Service" {
-			return &FuncServiceNode{snode}, &deployer_node
-		} else if node.AbsType == "QueueService" {
+		snode := ServiceNode{Name: node.Name, Type: node.Type, Params: params, ClientModifiers: cmodifiers, ServerModifiers: smodifiers, ASTServerNodes: serverASTNodes, ParamClientNodes: make(map[string][]*ServiceImplInfo), ModifierClientNodes: make(map[string][]*ServiceImplInfo), DepInfo: deploy.NewDeployInfo(), AbstractType: node.AbsType}
+		if strings.HasSuffix(node.AbsType, "QueueService") {
 			return &QueueServiceNode{snode}, &deployer_node
+		} else if strings.HasSuffix(node.AbsType, "Service") {
+			return &FuncServiceNode{snode}, &deployer_node
 		}
 	} else {
 		// These are component specific nodes!

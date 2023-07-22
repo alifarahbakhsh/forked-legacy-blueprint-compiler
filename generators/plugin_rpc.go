@@ -118,6 +118,14 @@ func (m *RPCServerModifier) ModifyServer(prev_node *ServiceImplInfo) (*ServiceIm
 	}
 	imports := generator.GetImports(prev_node.HasUserDefinedObjs || prev_node.HasReturnDefinedObjs)
 	constructor, body, cons_imports, fields, structs := generator.GenerateServerConstructor(prev_node.Name, prev_node.InstanceName, name, prev_node.BaseName, is_metrics_on)
+	for _, p := range m.Params {
+		switch param := p.(type) {
+		case *InstanceParameter:
+			continue
+		case *ValueParameter:
+			constructor.Args = append(constructor.Args, parser.GetBasicArg(param.KeywordName, "string"))
+		}
+	}
 	bodies[constructor.Name] = body
 	imports = append(imports, cons_imports...)
 	var baseImports []parser.ImportInfo

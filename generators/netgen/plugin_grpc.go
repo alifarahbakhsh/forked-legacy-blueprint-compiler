@@ -423,6 +423,9 @@ func (g *GRPCGenerator) GenerateServerMethods(handler_name string, service_name 
 		methods[method.Name] = method
 		bodies[method.Name] = body
 	}
+	run_method, run_body := g.generateServerRunMethod(service_name, handler_name, service_name, is_metrics_on)
+	methods[run_method.Name] = run_method
+	bodies[run_method.Name] = run_body
 	g.serviceTypes[service_name] = ServiceInfo{Name: service_name, Methods: methodInfos}
 	g.functions[service_name] = funcNames
 	return bodies, nil
@@ -591,7 +594,7 @@ func (g *GRPCGenerator) GenerateClientMethods(handler_name string, service_name 
 
 func (g *GRPCGenerator) GenerateServerConstructor(prev_handler string, service_name string, handler_name string, base_name string, is_metrics_on bool) (parser.FuncInfo, string, []parser.ImportInfo, []parser.ArgInfo, []parser.StructInfo) {
 	func_name := "New" + handler_name
-	ret_args := []parser.ArgInfo{parser.GetErrorArg("")}
+	ret_args := []parser.ArgInfo{parser.GetPointerArg("", handler_name)}
 	args := []parser.ArgInfo{parser.GetPointerArg("old_handler", prev_handler)}
 	funcInfo := parser.FuncInfo{Name: func_name, Args: args, Return: ret_args}
 	fields := []parser.ArgInfo{parser.GetPointerArg("service", prev_handler), parser.GetBasicArg("", g.appName+".Unimplemented"+base_name+"Server")}
@@ -601,27 +604,34 @@ func (g *GRPCGenerator) GenerateServerConstructor(prev_handler string, service_n
 	imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "net"})
 	//imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "time"})
 	//imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "google.golang.org/grpc/keepalive"})
+	if is_metrics_on {
+		funcs := g.functions[base_name]
+		fields = append(fields, generateMetricFields(funcs)...)
+		imports = append(imports, generateMetricImports()...)
+	}
 	body := ""
+	body += "handler := &" + handler_name + "{service:old_handler}\n"
+	body += "return handler"
+
+	return funcInfo, body, imports, fields, []parser.StructInfo{}
+}
+
+func (g *GRPCGenerator) generateServerRunMethod(service_name string, handler_name string, base_name string, is_metrics_on bool) (parser.FuncInfo, string) {
+	var body string
+	fn := parser.FuncInfo{Name: "Run", Args: []parser.ArgInfo{}, Return: []parser.ArgInfo{parser.GetErrorArg("")}}
 	body += "addr := os.Getenv(\"" + service_name + "_ADDRESS\")\n"
 	body += "port := os.Getenv(\"" + service_name + "_PORT\")\n"
 	body += "if addr == \"\" || port == \"\" {\n"
 	body += "\treturn errors.New(\"Address or Port were not set\")\n}\n"
 	body += "lis, err := net.Listen(\"tcp\", addr + \":\" + port)\n"
 	body += "if err != nil {\n\treturn err\n}\n"
-	body += "handler := &" + handler_name + "{service:old_handler}\n"
-	//body += "opts := []grpc.ServerOption{grpc.KeepaliveParams(keepalive.ServerParameters{Timeout: 120 * time.Second}), grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{PermitWithoutStream: true}) }\n"
-	//body += "grpcServer := grpc.NewServer(opts...)\n"
 	body += "grpcServer := grpc.NewServer()\n"
-	body += g.appName + ".Register" + base_name + "Server(grpcServer, handler)\n"
+	body += g.appName + ".Register" + base_name + "Server(grpcServer," + handler_name + ")\n"
 	if is_metrics_on {
-		funcs := g.functions[base_name]
-		fields = append(fields, generateMetricFields(funcs)...)
-		imports = append(imports, generateMetricImports()...)
-		body += generateMetricConstructorBody("handler")
+		body += generateMetricConstructorBody(handler_name)
 	}
 	body += "return grpcServer.Serve(lis)\n"
-
-	return funcInfo, body, imports, fields, []parser.StructInfo{}
+	return fn, body
 }
 
 func (g *GRPCGenerator) GenerateClientConstructor(service_name string, handler_name string, base_name string, is_metrics_on bool, timeout string) (parser.FuncInfo, string, []parser.ImportInfo, []parser.ArgInfo, []parser.StructInfo) {

@@ -49,10 +49,26 @@ type MainVisitor struct {
 	added_imports    map[string]bool
 	frameworks       map[string]netgen.NetworkGenerator
 	DepGraph         *DependencyGraph
+	// Process Main Function state
+	localServicesInfo map[string]map[string]string
+	ProcInfo          *ProcessRunServicesInfo
+	curProcName       string
+	localServices     map[string]string
 }
 
-func NewMainVisitor(logger *log.Logger, out_dir string, pathpkgs map[string]string, impls map[string]*parser.ImplInfo, specDir string, depgenfactory *deploy.DeployerGeneratorFactory, addrs map[string]ConnInfo, inventory []parser.Node, frameworks map[string]netgen.NetworkGenerator, dg *DependencyGraph) *MainVisitor {
-	return &MainVisitor{logger: logger, out_dir: out_dir, curDir: out_dir, pathpkgs: pathpkgs, impls: impls, specDir: specDir, depgenfactory: depgenfactory, addrs: addrs, inventory: inventory, frameworks: frameworks, DepGraph: dg}
+type ProcessRunServicesInfo struct {
+	GetFuncNames  map[string]string
+	GetFuncArgs   map[string][]parser.ArgInfo
+	InstanceTypes map[string]parser.ArgInfo
+	RunFuncArgs   map[string][]parser.ArgInfo
+}
+
+func NewProcessRunServicesInfo() *ProcessRunServicesInfo {
+	return &ProcessRunServicesInfo{GetFuncNames: make(map[string]string), GetFuncArgs: make(map[string][]parser.ArgInfo), InstanceTypes: make(map[string]parser.ArgInfo), RunFuncArgs: make(map[string][]parser.ArgInfo)}
+}
+
+func NewMainVisitor(logger *log.Logger, out_dir string, pathpkgs map[string]string, impls map[string]*parser.ImplInfo, specDir string, depgenfactory *deploy.DeployerGeneratorFactory, addrs map[string]ConnInfo, inventory []parser.Node, frameworks map[string]netgen.NetworkGenerator, dg *DependencyGraph, localServicesInfo map[string]map[string]string) *MainVisitor {
+	return &MainVisitor{logger: logger, out_dir: out_dir, curDir: out_dir, pathpkgs: pathpkgs, impls: impls, specDir: specDir, depgenfactory: depgenfactory, addrs: addrs, inventory: inventory, frameworks: frameworks, DepGraph: dg, localServicesInfo: localServicesInfo}
 }
 
 func (v *MainVisitor) modifySpecModFile() {
@@ -336,6 +352,17 @@ func (v *MainVisitor) generateMainFile() {
 		v.logger.Fatal(err)
 	}
 	func_body := "func main() {\n"
+	for name, arg := range v.ProcInfo.InstanceTypes {
+		func_body += "\tvar " + name + " *" + v.pkgName + "." + arg.String() + "\n"
+	}
+	for name, fn_name := range v.ProcInfo.GetFuncNames {
+		var arg_strings []string
+		fn_args := v.ProcInfo.GetFuncArgs[name]
+		for _, arg := range fn_args {
+			arg_strings = append(arg_strings, arg.Name)
+		}
+		func_body += "\t" + name + " = " + v.pkgName + "." + fn_name + "(" + strings.Join(arg_strings, ", ") + ")\n"
+	}
 	func_body += "\tc := make(chan error, 1)\n"
 	func_body += "\twg_done := make(chan bool)\n"
 	func_body += "\tvar wg sync.WaitGroup\n"
@@ -343,7 +370,12 @@ func (v *MainVisitor) generateMainFile() {
 	for _, name := range v.runNames {
 		func_body += "\tgo func(){\n"
 		func_body += "\t\tdefer wg.Done()\n"
-		func_body += "\t\terr := " + v.pkgName + "." + name + "()\n"
+		ret_args := v.ProcInfo.RunFuncArgs[name]
+		var ret_arg_strings []string
+		for _, arg := range ret_args {
+			ret_arg_strings = append(ret_arg_strings, arg.String())
+		}
+		func_body += "\t\terr := " + v.pkgName + "." + name + "(" + strings.Join(ret_arg_strings, ", ") + ")\n"
 		func_body += "\t\tif err != nil {\n"
 		func_body += "\t\t\tc <- err\n"
 		func_body += "\t\t}\n"
@@ -372,6 +404,14 @@ func (v *MainVisitor) VisitProcessNode(_ Visitor, n *ProcessNode) {
 	v.curDir = path.Join(oldPath, strings.ToLower(n.Name))
 	v.pkgName = strings.ToLower(n.Name)
 	v.runNames = []string{}
+	v.curProcName = n.Name
+	v.localServices = make(map[string]string)
+	if names, ok := v.localServicesInfo[n.Name]; ok {
+		for name, val := range names {
+			v.localServices[name] = val
+		}
+	}
+	v.ProcInfo = NewProcessRunServicesInfo()
 	v.DefaultVisitor.VisitProcessNode(v, n)
 	// Generate a run_script for each process
 	v.curDir = oldPath
@@ -401,9 +441,8 @@ func (v *MainVisitor) VisitFuncServiceNode(_ Visitor, n *FuncServiceNode) {
 	if err != nil {
 		v.logger.Fatal(err)
 	}
-	func_name := "Run" + n.Name
+	func_name := "Get" + n.Name
 	args := []parser.ArgInfo{}
-	ret_args := []parser.ArgInfo{parser.GetErrorArg("")}
 	body := ""
 
 	v.curClientNode = nil
@@ -437,6 +476,10 @@ func (v *MainVisitor) VisitFuncServiceNode(_ Visitor, n *FuncServiceNode) {
 
 	topo_ordering := v.DepGraph.Order[n.Name]
 	for _, name := range topo_ordering {
+		if val, ok := v.localServices[name]; ok {
+			v.client_names[name] = name
+			args = append(args, parser.GetPointerArg(name, val))
+		}
 		client_nodes := n.ParamClientNodes[name]
 		v.logger.Println("Getting client nodes for", name)
 		conn_info := v.addrs[name]
@@ -527,6 +570,9 @@ func (v *MainVisitor) VisitFuncServiceNode(_ Visitor, n *FuncServiceNode) {
 	main_handler_string := "spec_handler := " + pkg_name + "." + handler_node.Constructors[0].Name + "(" + strings.Join(harg_strings, ", ") + ")\n"
 	body += main_handler_string
 	prev_handler := "spec_handler"
+	last_type := ""
+	base_type := ""
+	has_run_func := false
 	for i := 0; i < len(n.ASTServerNodes); i += 1 {
 		handler_node := n.ASTServerNodes[i]
 		handler_name := strings.ToLower(handler_node.Name)
@@ -539,15 +585,17 @@ func (v *MainVisitor) VisitFuncServiceNode(_ Visitor, n *FuncServiceNode) {
 				arg_strings = append(arg_strings, val)
 			}
 		}
-		if i == len(n.ASTServerNodes)-1 {
-			body += "err_new := " + handler_node.Constructors[0].Name + "(" + prev_handler + ")\n"
-			body += "if err_new != nil {\n\treturn err_new\n}\n"
-		} else {
-			body += handler_name + " := " + handler_node.Constructors[0].Name + "(" + strings.Join(arg_strings, ", ") + ")\n"
-		}
+		body += handler_name + " := " + handler_node.Constructors[0].Name + "(" + strings.Join(arg_strings, ", ") + ")\n"
 		prev_handler = handler_name
+		last_type = handler_node.Name
+		base_type = handler_node.Name
+		if _, ok := handler_node.Methods["Run"]; ok {
+			has_run_func = ok
+		}
 	}
-	body += "return nil"
+	body += "return " + prev_handler
+
+	ret_args := []parser.ArgInfo{parser.GetPointerArg("", last_type)}
 
 	var arg_strings []string
 	for _, arg := range args {
@@ -563,6 +611,9 @@ func (v *MainVisitor) VisitFuncServiceNode(_ Visitor, n *FuncServiceNode) {
 	} else {
 		func_string += strings.Join(ret_strings, ", ")
 	}
+	v.ProcInfo.GetFuncNames[n.Name] = func_name
+	v.ProcInfo.InstanceTypes[n.Name] = parser.GetBasicArg("", base_type)
+	v.ProcInfo.GetFuncArgs[n.Name] = args
 	func_string += " {\n"
 	func_string += "\t" + strings.ReplaceAll(body, "\n", "\n\t")
 	func_string += "\n}\n"
@@ -570,8 +621,29 @@ func (v *MainVisitor) VisitFuncServiceNode(_ Visitor, n *FuncServiceNode) {
 	if err != nil {
 		v.logger.Fatal(err)
 	}
-	n.RunFuncName = func_name
-	v.runNames = append(v.runNames, func_name)
+	if has_run_func {
+		func_name := "Run" + n.Name
+		args := []parser.ArgInfo{parser.GetPointerArg("service", last_type)}
+		ret_args := []parser.ArgInfo{parser.GetErrorArg("")}
+		var arg_strings []string
+		for _, arg := range args {
+			arg_strings = append(arg_strings, arg.String())
+		}
+		var ret_strings []string
+		for _, arg := range ret_args {
+			ret_strings = append(ret_strings, arg.String())
+		}
+		func_string := "func " + func_name + "(" + strings.Join(arg_strings, ", ") + ") " + strings.Join(ret_strings, ", ") + "{\n"
+		func_string += "return service.Run()\n"
+		func_string += "}\n"
+		_, err = outf.WriteString(func_string + "\n")
+		if err != nil {
+			v.logger.Fatal(err)
+		}
+		n.RunFuncName = func_name
+		v.runNames = append(v.runNames, func_name)
+		v.ProcInfo.RunFuncArgs[func_name] = []parser.ArgInfo{parser.GetBasicArg(n.Name, "")}
+	}
 	v.deployInfo = n.DepInfo
 }
 

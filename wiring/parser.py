@@ -1,6 +1,6 @@
 import ast
 import os
-from .dataModels import ServiceParameterInfo, ModifierInfo, ModifierListInfo, ModifierLambdaInfo, ServiceInstance
+from .dataModels import ProcessInfo, ServiceParameterInfo, ModifierInfo, ModifierListInfo, ModifierLambdaInfo, ServiceInstance
 from enum import Enum, auto
 
 class AnnotationType(Enum):
@@ -60,6 +60,7 @@ class WiringDataCollector(ast.NodeVisitor):
         self.defined_modifiers = {}
         self.defined_modifier_lists = {}
         self.defined_modifier_lambdas = {}
+        self.defined_processes = {}
         self.modifier_registry = modifier_registry
 
     def parse_client_overriding(self, value_node):
@@ -98,6 +99,24 @@ class WiringDataCollector(ast.NodeVisitor):
             pinfo.client_opts = client_opts_node
             pinfos += [pinfo]
         return pinfos
+
+    def get_process_params(self, params):
+        pinfos = []
+        if len(params) > 1:
+            raise InvalidWiringSyntaxError(params[0].lineno, "Process only takes 1 argument named 'services'")
+        for p in params:
+            keyword_name = p.arg
+            if keyword_name != 'services':
+                raise InvalidWiringSyntaxError(p.lineno, "Process only takes 1 argument named 'services'") 
+            if not isinstance(p.value, ast.List):
+                raise InvalidWiringSyntaxError(p.lineno, "'services' argument expected list")
+            for element in p.value.elts:
+                if not isinstance(element, ast.Name):
+                    raise InvalidWiringSyntaxError(p.lineno, "Only names of service instances are permitted in the 'services' argument")
+                pinfo = ServiceParameterInfo("", element, element.id, True)
+                pinfos += [pinfo]
+        return pinfos
+
     
     def visit_Assign(self, node):
         raise UnAnnotatedAssignError(node.lineno)
@@ -156,10 +175,13 @@ class WiringDataCollector(ast.NodeVisitor):
         annotation_type, abstract_types = self.parse_annotation(node.annotation)
 
         is_modifier = False
+        is_service = False
+        is_process = False
 
         if annotation_type == AnnotationType.NORMAL:
             abstract_type = abstract_types[0]
-            if abstract_type == "Service" or abstract_type == "QueueService":
+            if abstract_type == "Service" or abstract_type == "QueueService" or abstract_type.endswith("Service"):
+                is_service = True
                 actual_type, params, server_opts_node, client_opts_node = self.parse_service_instantiation(node.value)
                 if not isinstance(node.value, ast.Call):
                     raise InvalidWiringSyntaxError(node.lineno, "Instance of Service type must be an object of a known service")
@@ -170,6 +192,7 @@ class WiringDataCollector(ast.NodeVisitor):
                 elif instance_name in self.defined_instances:
                     raise DuplicateInstanceNameError(node.lineno, instance_name)
             elif abstract_type in self.components:
+                is_service = True
                 actual_type, params, server_opts_node, client_opts_node = self.parse_service_instantiation(node.value)
                 if not isinstance(node.value, ast.Call):
                     raise InvalidWiringSyntaxError(node.lineno, "Instance of a Component type must be an object of a known Choice")
@@ -184,10 +207,15 @@ class WiringDataCollector(ast.NodeVisitor):
                     raise UnknownModifierError(node.lineno, node.value.func.id)
                 actual_type = node.value.func.id
                 params = self.get_param_infos(node.value.keywords)
+            elif abstract_type == 'Process':
+                is_process = True
+                actual_type = node.value.func.id
+                params = self.get_process_params(node.value.keywords)
+
             else:
                 raise InvalidWiringSyntaxError(node.lineno, "Currently only instances of services or components are supported")
             
-            if not is_modifier:
+            if is_service:
                 instance = self.service_instances[instance_name]            
                 instance.abstract_type = abstract_type
                 instance.actual_type = actual_type
@@ -195,9 +223,12 @@ class WiringDataCollector(ast.NodeVisitor):
                 instance.server_opts = server_opts_node
                 instance.client_opts = client_opts_node
                 self.service_instances[instance_name] = instance
-            else:
+            elif is_modifier:
                 modifierInfo = ModifierInfo(instance_name, actual_type,  params)
-                self.defined_modifiers[instance_name] = modifierInfo       
+                self.defined_modifiers[instance_name] = modifierInfo
+            elif is_process:
+                processInfo = ProcessInfo(instance_name, params)
+                self.defined_processes[instance_name] = processInfo       
         elif annotation_type == AnnotationType.LIST:
             element_type = abstract_types[0]
             if element_type != 'Modifier':
@@ -232,6 +263,7 @@ class WiringParser:
         self.defined_modifier_lists = {}
         self.defined_modifier_lambdas = {}
         self.modifier_registry = modifier_registry
+        self.defined_processes = {}
 
     def parse_file(self, filename):
         with open(filename, 'r') as inf:
@@ -246,3 +278,4 @@ class WiringParser:
         self.defined_modifiers = wiringParser.defined_modifiers
         self.defined_modifier_lists = wiringParser.defined_modifier_lists
         self.defined_modifier_lambdas = wiringParser.defined_modifier_lambdas
+        self.defined_processes = wiringParser.defined_processes

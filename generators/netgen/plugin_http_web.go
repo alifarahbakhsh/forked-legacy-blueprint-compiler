@@ -127,6 +127,9 @@ func (d *DefaultWebGenerator) GenerateServerMethods(handler_name string, service
 		bodies[method.Name] = body
 	}
 	d.functions[service_name] = func_names
+	run_method, run_body := d.generateServerRunMethod(service_name, handler_name, service_name, is_metrics_on)
+	methods[run_method.Name] = run_method
+	bodies[run_method.Name] = run_body
 	return bodies, nil
 }
 
@@ -215,7 +218,7 @@ func (d *DefaultWebGenerator) getClientImports() []parser.ImportInfo {
 
 func (d *DefaultWebGenerator) GenerateServerConstructor(prev_handler string, service_name string, handler_name string, base_name string, is_metrics_on bool) (parser.FuncInfo, string, []parser.ImportInfo, []parser.ArgInfo, []parser.StructInfo) {
 	func_name := "New" + handler_name
-	ret_args := []parser.ArgInfo{parser.GetErrorArg("")}
+	ret_args := []parser.ArgInfo{parser.GetPointerArg("", handler_name)}
 	args := []parser.ArgInfo{parser.GetPointerArg("old_handler", prev_handler)}
 	funcInfo := parser.FuncInfo{Name: func_name, Args: args, Return: ret_args}
 	fields := []parser.ArgInfo{parser.GetPointerArg("service", prev_handler)}
@@ -224,29 +227,43 @@ func (d *DefaultWebGenerator) GenerateServerConstructor(prev_handler string, ser
 	imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "errors"})
 	imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "log"})
 	body := ""
+	body += "handler := &" + handler_name + "{service: old_handler, url: url}\n"
+	var structs []parser.StructInfo
+	for _, v := range d.service_responses[base_name] {
+		structs = append(structs, d.response_objs[v])
+	}
+	if is_metrics_on {
+		funcs := d.functions[base_name]
+		fields = append(fields, generateMetricFields(funcs)...)
+		imports = append(imports, generateMetricImports()...)
+	}
+	body = "handler := &" + handler_name + "{service: old_handler, url: \"\"}\n"
+	body += "return handler"
+	return funcInfo, body, imports, fields, structs
+}
+
+func (d *DefaultWebGenerator) generateServerRunMethod(service_name string, handler_name string, base_name string, is_metrics_on bool) (parser.FuncInfo, string) {
+	var body string
+	fn := parser.FuncInfo{Name: "Run", Args: []parser.ArgInfo{}, Return: []parser.ArgInfo{parser.GetErrorArg("")}}
+
 	body += "addr := os.Getenv(\"" + service_name + "_ADDRESS\")\n"
 	body += "port := os.Getenv(\"" + service_name + "_PORT\")\n"
 	body += "if addr == \"\" || port == \"\" {\n"
 	body += "\treturn errors.New(\"Address or Port were not set\")\n}\n"
 	body += "url := \"http://\" + addr + \":\" + port\n"
 	body += "router := mux.NewRouter()\n"
-	body += "handler := &" + handler_name + "{service: old_handler, url: url}\n"
-	// Add paths
+
+	body += handler_name + ".url = url\n"
 	funcs := d.functions[base_name]
-	for _, fn := range funcs {
-		body += "router.Path(\"/" + fn + "\").HandlerFunc(handler." + fn + ")\n"
+	for _, f := range funcs {
+		body += "router.Path(\"/" + f + "\").HandlerFunc(" + handler_name + "." + f + ")\n"
 	}
-	var structs []parser.StructInfo
-	for _, v := range d.service_responses[base_name] {
-		structs = append(structs, d.response_objs[v])
-	}
+
 	if is_metrics_on {
-		fields = append(fields, generateMetricFields(funcs)...)
-		imports = append(imports, generateMetricImports()...)
-		body += generateMetricConstructorBody("handler")
+		body += generateMetricConstructorBody(handler_name)
 	}
 	body += "return http.ListenAndServe(addr + \":\" + port, router)"
-	return funcInfo, body, imports, fields, structs
+	return fn, body
 }
 
 func (d *DefaultWebGenerator) GenerateClientConstructor(service_name string, handler_name string, base_name string, is_metrics_on bool, timeout string) (parser.FuncInfo, string, []parser.ImportInfo, []parser.ArgInfo, []parser.StructInfo) {

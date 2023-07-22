@@ -1,41 +1,42 @@
 package main
 
 import (
-	"gonum.org/v1/gonum/stat/distuv"
-	rand2 "golang.org/x/exp/rand"
 	"encoding/json"
-	"net/http"
-	"net/url"
-	"log"
 	"flag"
-	"os"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
+	"math/rand"
+	"net/http"
+	"net/url"
+	"os"
+	"sort"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
-	"fmt"
-	"strings"
-	"sort"
-	"math/rand"
-	"genz/workload"
+
+	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/workload"
+	rand2 "golang.org/x/exp/rand"
+	"gonum.org/v1/gonum/stat/distuv"
 )
 
 type API struct {
-	Name string `json:"name"`
-	FuncName string `json:"arg_gen_func_name"`
-	Proportion int64 `json:"proportion"` // Proportion of the workload that should be this request. Sum of proportions for all APIs should be equal to 100.
-	Type string `json:"type"` // Type can only be GET or POST. For Millenial generated APIs, the type is always POST.
+	Name       string `json:"name"`
+	FuncName   string `json:"arg_gen_func_name"`
+	Proportion int64  `json:"proportion"` // Proportion of the workload that should be this request. Sum of proportions for all APIs should be equal to 100.
+	Type       string `json:"type"`       // Type can only be GET or POST. For Millenial generated APIs, the type is always POST.
 }
 
 type Config struct {
-	NumThreads int64 `json:"num_threads"`
-	BaseURL string `json:"url"`
-	NumReqs int64 `json:"num_reqs"` // Total number of requests
-	Duration string `json:"duration"`
-	APIs []API `json:"apis"`
-	Throughput int64 `json:"tput"` // Number of requests to be sent per second
-	IsOriginal bool `json:"is_original"`
+	NumThreads int64  `json:"num_threads"`
+	BaseURL    string `json:"url"`
+	NumReqs    int64  `json:"num_reqs"` // Total number of requests
+	Duration   string `json:"duration"`
+	APIs       []API  `json:"apis"`
+	Throughput int64  `json:"tput"` // Number of requests to be sent per second
+	IsOriginal bool   `json:"is_original"`
 }
 
 type HttpWorkload struct {
@@ -75,26 +76,26 @@ func (w *HttpWorkload) GetThroughput() int64 {
 }
 
 type Engine struct {
-	Workload *HttpWorkload
-	Stats []Stat
-	Registry *workload.WorkloadRegistry
+	Workload   *HttpWorkload
+	Stats      []Stat
+	Registry   *workload.WorkloadRegistry
 	IsOriginal bool
-	OutFile string
+	OutFile    string
 }
 
 type Stat struct {
-	Start int64
+	Start    int64
 	Duration int64
-	IsError bool
+	IsError  bool
 }
 
 type RequestInfo struct {
-	Url string
+	Url  string
 	Type string
-	Fn func(bool)url.Values
+	Fn   func(bool) url.Values
 }
 
-func (e *Engine) RunRequest(client *http.Client, req * RequestInfo, stat_channel chan Stat) {
+func (e *Engine) RunRequest(client *http.Client, req *RequestInfo, stat_channel chan Stat) {
 	start := time.Now()
 	var resp *http.Response
 	var err error
@@ -127,7 +128,6 @@ func (e *Engine) RunRequest(client *http.Client, req * RequestInfo, stat_channel
 	stat_channel <- stat
 }
 
-
 func (e *Engine) RunOpenLoop() {
 	apis := e.Workload.GetAPIs()
 	duration := e.Workload.GetDuration()
@@ -135,7 +135,7 @@ func (e *Engine) RunOpenLoop() {
 	target_tput := e.Workload.GetThroughput()
 	log.Println("Target throughput", target_tput)
 	request_infos := make(map[string]RequestInfo)
-	sort.Slice(apis, func(i, j int) bool {return apis[i].Proportion > apis[j].Proportion} )
+	sort.Slice(apis, func(i, j int) bool { return apis[i].Proportion > apis[j].Proportion })
 	proportion_map := make(map[int64]string)
 	var last_proportion_val int64
 	for _, api := range apis {
@@ -143,8 +143,8 @@ func (e *Engine) RunOpenLoop() {
 		requestInfo := RequestInfo{Url: target_url, Type: api.Type, Fn: e.Registry.GetGeneratorFunction(api.FuncName)}
 		request_infos[api.Name] = requestInfo
 		var i int64
-		for i = 0; i < api.Proportion; i+=1 {
-			proportion_map[last_proportion_val+i] = api.Name 
+		for i = 0; i < api.Proportion; i += 1 {
+			proportion_map[last_proportion_val+i] = api.Name
 		}
 		last_proportion_val += i
 	}
@@ -155,7 +155,7 @@ func (e *Engine) RunOpenLoop() {
 		count := 0
 		for stat := range stat_channel {
 			count += 1
-			if count % 1000 == 0 {
+			if count%1000 == 0 {
 				log.Println("Processed", count, "requests")
 			}
 			e.Stats = append(e.Stats, stat)
@@ -202,14 +202,14 @@ func (e *Engine) RunOpenLoop() {
 	// }()
 	go func() {
 		src := rand2.NewSource(0)
-		g := distuv.Poisson{ 100, src }
+		g := distuv.Poisson{100, src}
 		timer := time.NewTimer(0 * time.Second)
 		next := time.Now()
 		for {
 			select {
 			case <-stop:
 				return
-			case <- timer.C:
+			case <-timer.C:
 				// Select a request based on proportions
 				num := int64(rand.Intn(100))
 				api_name := proportion_map[num]
@@ -219,7 +219,7 @@ func (e *Engine) RunOpenLoop() {
 					defer wg.Done()
 					e.RunRequest(client, &requestInfo, stat_channel)
 				}()
-				next = next.Add(time.Duration(g.Rand() * tick_every / 100) * time.Nanosecond)
+				next = next.Add(time.Duration(g.Rand()*tick_every/100) * time.Nanosecond)
 				waitt := next.Sub(time.Now())
 				timer.Reset(waitt)
 			}
@@ -246,13 +246,13 @@ func (e *Engine) Run() {
 	var curReqs, i int64
 	var wg sync.WaitGroup
 	wg.Add(int(num_threads))
-	stat_channel := make(chan Stat, 2 * num_threads)
+	stat_channel := make(chan Stat, 2*num_threads)
 	done := make(chan bool)
-	go func () {
+	go func() {
 		count := 0
 		for stat := range stat_channel {
 			count += 1
-			if count % 1000 == 0 {
+			if count%1000 == 0 {
 				log.Println("Processed", count, "requests")
 			}
 			e.Stats = append(e.Stats, stat)
@@ -299,11 +299,11 @@ func (e *Engine) PrintStats() {
 			num_errors += 1
 		}
 		sum_durations += stat.Duration
-		stat_strings = append(stat_strings, fmt.Sprintf("%d,%d,%t",stat.Start,stat.Duration,stat.IsError))
+		stat_strings = append(stat_strings, fmt.Sprintf("%d,%d,%t", stat.Start, stat.Duration, stat.IsError))
 	}
 
 	fmt.Println("Total Number of Requests:", num_reqs)
-	fmt.Println("Successful Requests:", num_reqs - num_errors)
+	fmt.Println("Successful Requests:", num_reqs-num_errors)
 	fmt.Println("Error Responses:", num_errors)
 	fmt.Println("Average Latency:", float64(sum_durations)/float64(num_reqs))
 	// Write to file

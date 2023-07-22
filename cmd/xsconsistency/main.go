@@ -1,33 +1,34 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
-	"log"
-	"genz/workload"
-	"sync"
-	"time"
-	"strings"
-	"os"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"encoding/json"
+	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
+	"strings"
+	"sync"
+	"time"
 
-	"gonum.org/v1/gonum/stat/distuv"
+	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/workload"
+
 	rand2 "golang.org/x/exp/rand"
+	"gonum.org/v1/gonum/stat/distuv"
 )
 
 type Stat struct {
 	PostID int64
 	UserID int64
-	Found bool
+	Found  bool
 }
 
 type PostResponse struct {
-	PostID int64 `json:"Ret0"`
+	PostID       int64   `json:"Ret0"`
 	UserMentions []int64 `json:"Ret1"`
 }
 
@@ -121,7 +122,7 @@ func runCompose(addr string, tput int, finish_chan chan bool, post_chan chan Pos
 					post.UserMentions = []int64{user_id}
 					post_chan <- post
 				}()
-				next = next.Add(time.Duration(g.Rand() * tick_every / 100) * time.Nanosecond)
+				next = next.Add(time.Duration(g.Rand()*tick_every/100) * time.Nanosecond)
 				wait := next.Sub(time.Now())
 				timer.Reset(wait)
 			}
@@ -208,7 +209,7 @@ func runVerifier(addr string, wait time.Duration, finish_chan chan bool, stat_ch
 			}
 		}
 	}()
-	<- finish_chan
+	<-finish_chan
 	log.Println("Verifier waiting to finish")
 	wg.Wait()
 	log.Println("Verifier over")
@@ -234,7 +235,7 @@ func main() {
 	finish_chan := make(chan bool, 2)
 	stat_channel := make(chan Stat, *tPutPtr)
 	done := make(chan bool)
-	post_chan := make(chan PostResponse, tput * 10)
+	post_chan := make(chan PostResponse, tput*10)
 
 	log.Println("Starting Experiment")
 	var wg sync.WaitGroup
@@ -243,7 +244,7 @@ func main() {
 		i := 0
 		for stat := range stat_channel {
 			i += 1
-			if i % 100 == 0 {
+			if i%100 == 0 {
 				log.Println("Got ", i, " results")
 			}
 			stats = append(stats, stat)

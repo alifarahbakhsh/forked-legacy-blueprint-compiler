@@ -56,7 +56,19 @@ func (v *ClientCollectorVisitor) generateClientNode(server_node *ServiceImplInfo
 	}
 	imports := []parser.ImportInfo{parser.ImportInfo{ImportName: "", FullName: "context"}}
 	v.logger.Println(server_node.BaseImports)
-	return &ServiceImplInfo{Name: name, ReceiverName: receiverName, Methods: funcs, MethodBodies: methods, BaseName: server_node.BaseName, Imports: imports, InstanceName: server_node.InstanceName, HasUserDefinedObjs: server_node.HasUserDefinedObjs, BaseImports: server_node.BaseImports, HasReturnDefinedObjs: server_node.HasReturnDefinedObjs, PluginName: "Blueprint Core"}
+	info := &ServiceImplInfo{Name: name, ReceiverName: receiverName, Methods: funcs, MethodBodies: methods, BaseName: server_node.BaseName, Imports: imports, InstanceName: server_node.InstanceName, HasUserDefinedObjs: server_node.HasUserDefinedObjs, BaseImports: server_node.BaseImports, HasReturnDefinedObjs: server_node.HasReturnDefinedObjs, PluginName: "Blueprint Core"}
+
+	// Add a default constructor that creates a client that calls into the spec. This will get overwritten if there are other modifiers attached to the client!
+	cons_args := []parser.ArgInfo{parser.GetPointerArg("client", info.BaseName)}
+	cons_ret_args := []parser.ArgInfo{parser.GetPointerArg("", info.Name)}
+	constructor := parser.FuncInfo{Name: "New" + info.Name, Args: cons_args, Return: cons_ret_args}
+	cons_body := "return &" + name + "{client: client}"
+	info.Constructors = []parser.FuncInfo{constructor}
+	info.MethodBodies[constructor.Name] = cons_body
+	info.Fields = []parser.ArgInfo{parser.GetPointerArg("client", info.BaseName)}
+	info.Values = []string{server_node.InstanceName}
+
+	return info
 }
 
 func (v *ClientCollectorVisitor) VisitFuncServiceNode(_ Visitor, n *FuncServiceNode) {

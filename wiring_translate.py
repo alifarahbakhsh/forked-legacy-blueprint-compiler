@@ -65,6 +65,7 @@ def main():
     modifiers = wiringParser.defined_modifiers
     modifier_lists = wiringParser.defined_modifier_lists
     modifier_lambdas = wiringParser.defined_modifier_lambdas
+    processes = wiringParser.defined_processes
 
     modifierEvaluator = ModifierPartialEvaluator(modifiers, modifier_lists, modifier_lambdas, ModifierParser())
 
@@ -75,6 +76,7 @@ def main():
         service_instances[name] = instance
 
     root_node = MillenialRootNode(children=[])
+    service_node_map = {}
     container_counter = 1
     for name, instance in service_instances.items():
         if instance.abstract_type in COMPONENTS:
@@ -116,7 +118,7 @@ def main():
             container_node = ContainerNode("container" + str(container_counter), children=[service_node])
             container_counter += 1
             root_node.add_child(container_node)
-        elif instance.abstract_type == 'Service' or instance.abstract_type == 'QueueService':
+        elif instance.abstract_type == 'Service' or instance.abstract_type == 'QueueService' or instance.abstract_type.endswith("Service"):
             # Service instances need both Container Node and Process Node            
             client_modifiers = []
             server_modifiers = []
@@ -152,10 +154,31 @@ def main():
                 param = ParameterInfo(name=a.instance_name, isservice=a.isinstance, client_modifiers=param_modifiers, param_val=client_val, keyword_name=a.keyword_name)
                 arguments += [param]
             service_node = ServiceNode(name=instance.name, client_modifiers=client_modifiers, server_modifiers=server_modifiers, arguments=arguments, actual_type=instance.actual_type, abstract_type=instance.abstract_type)
-            process_node = ProcessNode("Proc1", children=[service_node])
-            container_node = ContainerNode("container" + str(container_counter), children=[process_node])
-            container_counter += 1
-            root_node.add_child(container_node)
+            service_node_map[instance.name] = service_node
+
+    seen_services = {}
+    for proc_name, process in processes.items():
+        service_nodes = []
+        for instance in process.instances:
+            if instance.instance_name in seen_services:
+                raise Exception("Double use of a service instance")
+            seen_services[instance.instance_name] = True
+            service_node = service_node_map[instance.instance_name]
+            service_nodes += [service_node]
+        process_node = ProcessNode(proc_name, children=service_nodes)
+        container_node = ContainerNode("container" + str(container_counter), children=[process_node])
+        container_counter += 1
+        root_node.add_child(container_node)
+
+    # Take care of orphan services
+    for name, service_node in service_node_map.items():
+        if name in seen_services:
+            continue
+        process_node = ProcessNode("Proc1", children=[service_node])
+        container_node = ContainerNode("container" + str(container_counter), children=[process_node])
+        container_counter += 1
+        root_node.add_child(container_node)
+
 
     with open(output_file, 'w+') as outf:
         outf.write(root_node.toJSON())

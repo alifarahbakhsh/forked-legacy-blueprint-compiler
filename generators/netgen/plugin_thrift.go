@@ -319,7 +319,7 @@ func (t *ThriftGenerator) packResponse(service_name string, func_name string, re
 
 func (t *ThriftGenerator) GenerateServerConstructor(prev_handler string, service_name string, handler_name string, base_name string, is_metrics_on bool) (parser.FuncInfo, string, []parser.ImportInfo, []parser.ArgInfo, []parser.StructInfo) {
 	func_name := "New" + handler_name
-	ret_args := []parser.ArgInfo{parser.GetErrorArg("")}
+	ret_args := []parser.ArgInfo{parser.GetPointerArg("", handler_name)}
 	args := []parser.ArgInfo{parser.GetPointerArg("old_handler", prev_handler)}
 	funcInfo := parser.FuncInfo{Name: func_name, Args: args, Return: ret_args}
 	fields := []parser.ArgInfo{parser.GetPointerArg("service", prev_handler)}
@@ -327,6 +327,20 @@ func (t *ThriftGenerator) GenerateServerConstructor(prev_handler string, service
 	imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "os"})
 	imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "errors"})
 	body := ""
+	if is_metrics_on {
+		funcs := t.functions[base_name]
+		fields = append(fields, generateMetricFields(funcs)...)
+		imports = append(imports, generateMetricImports()...)
+	}
+
+	body = "handler := &" + handler_name + "{service:old_handler}\n"
+	body += "return handler"
+	return funcInfo, body, imports, fields, []parser.StructInfo{}
+}
+
+func (t *ThriftGenerator) generateServerRunMethod(service_name string, handler_name string, base_name string, is_metrics_on bool) (parser.FuncInfo, string) {
+	var body string
+	fn := parser.FuncInfo{Name: "Run", Args: []parser.ArgInfo{}, Return: []parser.ArgInfo{parser.GetErrorArg("")}}
 	body += "var protocolFactory thrift.TProtocolFactory\n"
 	body += "protocolFactory = thrift.NewTBinaryProtocolFactory(true, true)\n"
 	body += "var transportFactory thrift.TTransportFactory\n"
@@ -339,17 +353,13 @@ func (t *ThriftGenerator) GenerateServerConstructor(prev_handler string, service
 	body += "var err error\n"
 	body += "transport, err = thrift.NewTServerSocket(addr + \":\" + port)\n"
 	body += "if err != nil {\n\treturn err\n}\n"
-	body += "handler := &" + handler_name + "{service:old_handler}\n"
-	body += "processor := " + t.appName + ".New" + base_name + "Processor(handler)\n"
+	body += "processor := " + t.appName + ".New" + base_name + "Processor(" + handler_name + ")\n"
 	body += "server := thrift.NewTSimpleServer4(processor, transport, transportFactory, protocolFactory)\n"
 	if is_metrics_on {
-		funcs := t.functions[base_name]
-		fields = append(fields, generateMetricFields(funcs)...)
-		imports = append(imports, generateMetricImports()...)
-		body += generateMetricConstructorBody("handler")
+		body += generateMetricConstructorBody(handler_name)
 	}
 	body += "return server.Serve()"
-	return funcInfo, body, imports, fields, []parser.StructInfo{}
+	return fn, body
 }
 
 func (t *ThriftGenerator) GenerateClientConstructor(service_name string, handler_name string, base_name string, is_metrics_on bool, timeout string) (parser.FuncInfo, string, []parser.ImportInfo, []parser.ArgInfo, []parser.StructInfo) {
@@ -459,6 +469,9 @@ func (t *ThriftGenerator) GenerateServerMethods(handler_name string, service_nam
 		methods[method.Name] = method
 		bodies[method.Name] = body
 	}
+	run_method, run_body := t.generateServerRunMethod(service_name, handler_name, service_name, is_metrics_on)
+	methods[run_method.Name] = run_method
+	bodies[run_method.Name] = run_body
 	t.serviceTypes[service_name] = ServiceInfo{Name: service_name, Methods: methodInfos}
 	t.functions[service_name] = funcNames
 	return bodies, nil
