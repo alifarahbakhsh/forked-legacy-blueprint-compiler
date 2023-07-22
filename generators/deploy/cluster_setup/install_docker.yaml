@@ -1,0 +1,67 @@
+---
+- hosts: all
+  gather_facts: no
+  run_once: True
+  tasks:
+    - set_fact:
+          reinstall: no
+      delegate_to: localhost
+      delegate_facts: yes
+
+- name: Run cleanup play
+  import_playbook: cleanup_docker.yaml
+  when: hostvars.localhost.reinstall
+  
+- hosts: all
+  vars:
+    release: buster
+    distro: deb
+    distro_full: debian
+  tasks:
+    - name: Check if docker is installed already
+      command: "docker -v"
+      register: docker_inst_status
+      ignore_errors: yes
+
+    - name: Run Docker setup
+      block:
+        - name: Install aptitude using apt
+          apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
+
+        - name: Install required system packages
+          apt: name={{ item }} state=latest update_cache=yes
+          loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'virtualenv']
+
+        - name: Add Docker GPG apt Key
+          apt_key:
+            url: https://download.docker.com/linux/{{distro_full}}/gpg
+            state: present
+
+        - name: Add Docker Repository
+          apt_repository:
+            repo: "{{ distro }} https://download.docker.com/linux/{{distro_full}} {{ release }} stable"
+            state: present
+
+        - name: Update apt and install docker-ce
+          apt: 
+            update_cache: yes
+            name: docker-ce
+            state: latest
+        - name: Update apt and install docker-ce-cli
+          apt: 
+            update_cache: yes
+            name: docker-ce-cli
+            state: latest
+            
+        - name: Update apt and install containerd.io
+          apt: 
+            update_cache: yes
+            name: containerd.io
+            state: latest        
+
+      when: docker_inst_status.rc > 0
+
+    - name: Install python docker module
+      command: pip3 install docker
+      ignore_errors: yes
+   

@@ -1,0 +1,29 @@
+---
+- hosts: all
+  tasks:
+    - name: Check if Docker is installed already
+      command: "docker -v"
+      register: docker_inst_status
+      ignore_errors: yes
+
+    - name: Uninstall Docker
+      block:
+        
+        - name: Purge docker
+          shell: |
+            yes Y | apt-get purge docker-ce docker-ce-cli containerd.io runc
+          ignore_errors: yes
+        
+        - name: Cleanup images and containers
+          shell: |
+            rm -rf /var/lib/docker
+            rm -rf /var/lib/containerd
+            exit 0
+          register: cleanup_res
+          ignore_errors: yes
+
+
+        - name: Report cleanup status
+          debug:
+            msg: cleanup finished with status {{ cleanup_res }}
+      when: docker_inst_status.rc == 0

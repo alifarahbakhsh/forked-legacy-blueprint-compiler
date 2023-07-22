@@ -1,0 +1,30 @@
+{
+    "app_name" : "leaf",
+    "src_dir" : "examples/Leaf/input/input_go",
+    "output_dir" : "examples/Leaf/output_go_grpc",
+    "wiring_file" : "examples/Leaf/wiring/instances_grpc.py",
+    "target" : "go",
+    "addresses": [
+        {
+            "name" : "leafService",
+            "address" : "leafService",
+            "port" : 9500
+        },
+        {
+            "name" : "nonleafService",
+            "address" : "nonleafService",
+            "port" : 9501
+        },
+        {
+            "name" : "webService",
+            "address" : "webService",
+            "port" : 9502
+        },
+	{
+	    "name" : "jaegerTracer",
+	    "address": "jaegerTracer",
+	    "port": 14268 
+	}
+    ],
+    "inventory":[]
+}
