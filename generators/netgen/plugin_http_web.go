@@ -51,7 +51,9 @@ func (d *DefaultWebGenerator) generateServiceMethod(handler_name string, service
 	if is_metrics_on {
 		body += generateFunctionWrapperBody(handler_name, funcInfo.Name)
 	}
-	body += "var err error\n"
+	if len(funcInfo.Args) > 1 {
+		body += "var err error\n"
+	}
 	var arg_names []string
 	for idx, arg := range funcInfo.Args {
 		if idx == 0 {
@@ -101,7 +103,7 @@ func (d *DefaultWebGenerator) generateServiceMethod(handler_name string, service
 	return body, nil
 }
 
-func (d *DefaultWebGenerator) GenerateServerMethods(handler_name string, service_name string, methods map[string]parser.FuncInfo, is_metrics_on bool) (map[string]string, error) {
+func (d *DefaultWebGenerator) GenerateServerMethods(handler_name string, service_name string, methods map[string]parser.FuncInfo, is_metrics_on bool, instance_name string) (map[string]string, error) {
 	bodies := make(map[string]string)
 	var func_names []string
 	for name, method := range methods {
@@ -127,7 +129,7 @@ func (d *DefaultWebGenerator) GenerateServerMethods(handler_name string, service
 		bodies[method.Name] = body
 	}
 	d.functions[service_name] = func_names
-	run_method, run_body := d.generateServerRunMethod(service_name, handler_name, service_name, is_metrics_on)
+	run_method, run_body := d.generateServerRunMethod(instance_name, handler_name, service_name, is_metrics_on)
 	methods[run_method.Name] = run_method
 	bodies[run_method.Name] = run_body
 	return bodies, nil
@@ -262,6 +264,7 @@ func (d *DefaultWebGenerator) generateServerRunMethod(service_name string, handl
 	if is_metrics_on {
 		body += generateMetricConstructorBody(handler_name)
 	}
+	body += "log.Println(\"Launching Server\")\n"
 	body += "return http.ListenAndServe(addr + \":\" + port, router)"
 	return fn, body
 }

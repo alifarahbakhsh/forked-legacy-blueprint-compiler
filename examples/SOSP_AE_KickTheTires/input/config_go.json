@@ -1,0 +1,15 @@
+{
+    "app_name" : "kickthetires",
+    "src_dir" : "examples/SOSP_AE_KickTheTires/input/input_go",
+    "output_dir" : "examples/SOSP_AE_KickTheTires/output_go",
+    "wiring_file" : "examples/SOSP_AE_KickTheTires/wiring/instances.py",
+    "target" : "go",
+    "hostname": "localhost",
+    "addresses": [
+        {
+            "name" : "helloEvaluatorsService",
+            "address" : "helloEvaluatorsService",
+            "port" : 5500
+        }
+    ]
+}

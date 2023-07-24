@@ -112,7 +112,7 @@ func (m *RPCServerModifier) ModifyServer(prev_node *ServiceImplInfo) (*ServiceIm
 	newMethods := copyMap(prev_node.Methods)
 	receiver_name := "rpchandler"
 	name := prev_node.BaseName + "Handler"
-	bodies, err := generator.GenerateServerMethods(receiver_name, prev_node.BaseName, newMethods, is_metrics_on)
+	bodies, err := generator.GenerateServerMethods(receiver_name, prev_node.BaseName, newMethods, is_metrics_on, prev_node.InstanceName)
 	if err != nil {
 		return nil, err
 	}

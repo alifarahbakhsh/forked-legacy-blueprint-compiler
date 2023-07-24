@@ -408,7 +408,7 @@ func (t *ThriftGenerator) GenerateClientConstructor(service_name string, handler
 	return funcInfo, body, imports, fields, []parser.StructInfo{}
 }
 
-func (t *ThriftGenerator) GenerateServerMethods(handler_name string, service_name string, methods map[string]parser.FuncInfo, is_metrics_on bool) (map[string]string, error) {
+func (t *ThriftGenerator) GenerateServerMethods(handler_name string, service_name string, methods map[string]parser.FuncInfo, is_metrics_on bool, instance_name string) (map[string]string, error) {
 	bodies := make(map[string]string)
 	var methodInfos []MethodInfo
 	var funcNames []string
@@ -469,7 +469,7 @@ func (t *ThriftGenerator) GenerateServerMethods(handler_name string, service_nam
 		methods[method.Name] = method
 		bodies[method.Name] = body
 	}
-	run_method, run_body := t.generateServerRunMethod(service_name, handler_name, service_name, is_metrics_on)
+	run_method, run_body := t.generateServerRunMethod(instance_name, handler_name, service_name, is_metrics_on)
 	methods[run_method.Name] = run_method
 	bodies[run_method.Name] = run_body
 	t.serviceTypes[service_name] = ServiceInfo{Name: service_name, Methods: methodInfos}

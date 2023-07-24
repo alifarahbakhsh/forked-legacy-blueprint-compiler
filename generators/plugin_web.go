@@ -111,7 +111,7 @@ func (m *WebServerModifier) ModifyServer(prev_node *ServiceImplInfo) (*ServiceIm
 	receiver_name := "webhandler"
 	name := prev_node.BaseName + "Handler"
 	is_metrics_on := m.isMetricsOn()
-	bodies, err := generator.GenerateServerMethods(receiver_name, prev_node.BaseName, newMethods, is_metrics_on)
+	bodies, err := generator.GenerateServerMethods(receiver_name, prev_node.BaseName, newMethods, is_metrics_on, prev_node.InstanceName)
 	if err != nil {
 		return nil, err
 	}

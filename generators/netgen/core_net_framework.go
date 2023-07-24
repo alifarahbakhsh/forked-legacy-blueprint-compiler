@@ -42,7 +42,7 @@ type ServiceInfo struct {
 }
 
 type NetworkGenerator interface {
-	GenerateServerMethods(handler_name string, service_name string, methods map[string]parser.FuncInfo, is_metrics_on bool) (map[string]string, error)
+	GenerateServerMethods(handler_name string, service_name string, methods map[string]parser.FuncInfo, is_metrics_on bool, instance_name string) (map[string]string, error)
 	GenerateClientMethods(handler_name string, service_name string, methods map[string]parser.FuncInfo, nextNodeMethodArgs []parser.ArgInfo, nextNodeMethodReturn []parser.ArgInfo, is_metrics_on bool, has_timeout bool) (map[string]string, error)
 	SetAppName(appName string)
 	GenerateFiles(outdir string) error
