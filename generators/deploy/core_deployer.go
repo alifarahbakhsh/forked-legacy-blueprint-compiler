@@ -5,12 +5,12 @@ import (
 )
 
 type DeployInfo struct {
-	Address string
-	Hostname string
-	Port int
-	DockerPath string
-	ImageName string
-	EnvVars map[string]string
+	Address     string
+	Hostname    string
+	Port        int
+	DockerPath  string
+	ImageName   string
+	EnvVars     map[string]string
 	PublicPorts map[int]int
 	NumReplicas int
 }
@@ -19,32 +19,26 @@ func NewDeployInfo() *DeployInfo {
 	return &DeployInfo{EnvVars: make(map[string]string), PublicPorts: make(map[int]int)}
 }
 
-type DeployerGenerator interface {
-	AddService(name string, depInfo *DeployInfo)
-	AddChoice(name string, depInfo *DeployInfo)
-	GenerateConfigFiles(out_dir string) error
-}
-
-type NoOpDeployerGenerator struct {}
+type NoOpDeployerGenerator struct{}
 
 func (n *NoOpDeployerGenerator) AddService(name string, depInfo *DeployInfo) {}
-func (n *NoOpDeployerGenerator) AddChoice(name string, depInfo *DeployInfo) {}
-func (n *NoOpDeployerGenerator) GenerateConfigFiles(out_dir string) error { return nil }
+func (n *NoOpDeployerGenerator) AddChoice(name string, depInfo *DeployInfo)  {}
+func (n *NoOpDeployerGenerator) GenerateConfigFiles(out_dir string) error    { return nil }
 
 func NewNoOpDeployerGenerator() DeployerGenerator {
 	return &NoOpDeployerGenerator{}
 }
 
 type DeployerGeneratorFactory struct {
-	Generators map[string]DeployerGenerator
-	GeneratorFuncs map[string]func()DeployerGenerator
+	Generators     map[string]DeployerGenerator
+	GeneratorFuncs map[string]func() DeployerGenerator
 }
 
 var factory *DeployerGeneratorFactory
 
 func GetDepGenFactory() *DeployerGeneratorFactory {
 	if factory == nil {
-		gen_funcs := make(map[string]func()DeployerGenerator)
+		gen_funcs := make(map[string]func() DeployerGenerator)
 		gen_funcs["docker"] = NewDockerComposeDeployerGenerator
 		gen_funcs["kubernetes"] = NewKubernetesDeployerGenerator
 		gen_funcs["ansible"] = NewAnsibleDeployerGenerator
