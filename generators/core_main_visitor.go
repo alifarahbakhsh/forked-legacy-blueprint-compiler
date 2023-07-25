@@ -511,7 +511,10 @@ func (v *MainVisitor) VisitFuncServiceNode(_ Visitor, n *FuncServiceNode) {
 			def_client_node.Fields = []parser.ArgInfo{parser.GetPointerArg("client", prev_client_node.Name)}
 			arg_strings := []string{v.prev_client_name}
 			client_name := v.getVariableName(def_client_node)
-			for _, value := range def_client_node.Values {
+			for idx, value := range def_client_node.Values {
+				if idx == 0 {
+					continue
+				}
 				if val, ok := v.client_names[value]; !ok {
 					arg_strings = append(arg_strings, "\""+value+"\"")
 				} else {
@@ -731,7 +734,10 @@ func (v *MainVisitor) VisitQueueServiceNode(_ Visitor, n *QueueServiceNode) {
 			def_client_node.Fields = []parser.ArgInfo{parser.GetPointerArg("client", prev_client_node.Name)}
 			arg_strings := []string{v.prev_client_name}
 			client_name := strings.ToLower(def_client_node.Name)
-			for _, value := range def_client_node.Values {
+			for idx, value := range def_client_node.Values {
+				if idx == 0 {
+					continue
+				}
 				if val, ok := v.client_names[value]; !ok {
 					arg_strings = append(arg_strings, "\""+value+"\"")
 				} else {

@@ -31,7 +31,7 @@ func main() {
 		logger.SetOutput(ioutil.Discard)
 	}
 
-	bar := progressbar.Default(17)
+	bar := progressbar.Default(18)
 
 	config, err := parser.ParseConfig(configFile)
 	if err != nil {
@@ -58,11 +58,15 @@ func main() {
 	printVisitor.Print()
 	bar.Add(1)
 
+	coLocatedServiceVisitor := generators.NewCoLocatedServiceInfosVisitor(logger)
+	generator.RootNode.Accept(coLocatedServiceVisitor)
+	bar.Add(1)
+
 	depGraphVisitor := generators.NewDependencyGraphVisitor(logger, specParser.Implementations, specParser.Services)
 	generator.RootNode.Accept(depGraphVisitor)
 	depGraph := depGraphVisitor.DepGraph
 	logger.Println("Dependency graph is as follows: \n" + depGraph.String())
-	depGraph.TopoSort()
+	depGraph.TopoSort(coLocatedServiceVisitor.CoLocatedServices)
 	bar.Add(1)
 
 	// Apply source code modifiers + generate network layer node files

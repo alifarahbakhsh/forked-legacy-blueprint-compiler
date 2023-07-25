@@ -33,3 +33,45 @@ func (v *LocalServicesInfoCollectorVisitor) VisitFuncServiceNode(_ Visitor, n *F
 		v.LocalServiceInfos[v.curProcName][last_server_node.InstanceName] = last_server_node.Name
 	}
 }
+
+type CoLocatedServiceInfosVisitor struct {
+	DefaultVisitor
+	logger            *log.Logger
+	CoLocatedServices map[string][]string
+	curProcName       string
+	procServices      map[string][]string
+}
+
+func NewCoLocatedServiceInfosVisitor(logger *log.Logger) *CoLocatedServiceInfosVisitor {
+	return &CoLocatedServiceInfosVisitor{DefaultVisitor{}, logger, make(map[string][]string), "", make(map[string][]string)}
+}
+
+func (v *CoLocatedServiceInfosVisitor) VisitMillenialNode(_ Visitor, n *MillenialNode) {
+	v.logger.Println("Starting CoLocatedServiceInfosVisitor visit")
+	v.DefaultVisitor.VisitMillenialNode(v, n)
+	v.logger.Println("Ending CoLocatedServiceInfosVisitor visit")
+	for _, names := range v.procServices {
+		for _, name := range names {
+			v.CoLocatedServices[name] = []string{}
+			for _, name2 := range names {
+				if name != name2 {
+					v.CoLocatedServices[name] = append(v.CoLocatedServices[name], name2)
+				}
+			}
+		}
+	}
+
+	for service, colocations := range v.CoLocatedServices {
+		v.logger.Println(service, colocations)
+	}
+}
+
+func (v *CoLocatedServiceInfosVisitor) VisitProcessNode(_ Visitor, n *ProcessNode) {
+	v.curProcName = n.Name
+	v.procServices[v.curProcName] = []string{}
+	v.DefaultVisitor.VisitProcessNode(v, n)
+}
+
+func (v *CoLocatedServiceInfosVisitor) VisitFuncServiceNode(_ Visitor, n *FuncServiceNode) {
+	v.procServices[v.curProcName] = append(v.procServices[v.curProcName], n.Name)
+}

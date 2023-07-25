@@ -26,14 +26,16 @@ func (g *DependencyGraph) AddEdge(to string, from string) {
 	}
 }
 
-func (g *DependencyGraph) topoSortHelper(root string, is_root bool) {
+func (g *DependencyGraph) topoSortHelper(root string, is_root bool, localServices map[string]bool) {
 	if v, ok := g.visited[root]; ok && v {
 		return
 	}
 	g.visited[root] = true
-	if v, ok := g.edges[root]; ok {
-		for _, edge := range v {
-			g.topoSortHelper(edge, false)
+	if _, ok0 := localServices[root]; ok0 || is_root {
+		if v, ok := g.edges[root]; ok {
+			for _, edge := range v {
+				g.topoSortHelper(edge, false, localServices)
+			}
 		}
 	}
 	// Don't append the starting node
@@ -42,12 +44,18 @@ func (g *DependencyGraph) topoSortHelper(root string, is_root bool) {
 	}
 }
 
-func (g *DependencyGraph) TopoSort() {
+func (g *DependencyGraph) TopoSort(coLocatedServices map[string][]string) {
 	// Run a topo sort from all nodes
 	for node := range g.edges {
+		localServices := make(map[string]bool)
+		coLocated := coLocatedServices[node]
+		for _, service := range coLocated {
+			localServices[service] = true
+		}
 		g.order = []string{}
-		g.topoSortHelper(node, true)
+		g.topoSortHelper(node, true, localServices)
 		g.Order[node] = g.order
+		g.visited = make(map[string]bool)
 	}
 }
 

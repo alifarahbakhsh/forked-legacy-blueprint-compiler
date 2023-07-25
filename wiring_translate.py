@@ -171,10 +171,12 @@ def main():
         root_node.add_child(container_node)
 
     # Take care of orphan services
+    num_procs = len(processes)
     for name, service_node in service_node_map.items():
         if name in seen_services:
             continue
-        process_node = ProcessNode("Proc1", children=[service_node])
+        num_procs += 1
+        process_node = ProcessNode("Proc" + str(num_procs), children=[service_node])
         container_node = ContainerNode("container" + str(container_counter), children=[process_node])
         container_counter += 1
         root_node.add_child(container_node)
