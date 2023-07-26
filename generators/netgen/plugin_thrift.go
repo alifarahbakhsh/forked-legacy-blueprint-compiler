@@ -34,7 +34,7 @@ func (t *ThriftGenerator) SetAppName(appName string) {
 }
 
 func (t *ThriftGenerator) GetRequirements() []parser.RequireInfo {
-	return []parser.RequireInfo{parser.RequireInfo{Name: "gen-go/" + t.appName, Path: "../gen-go/" + t.appName, Version: "v1.0.0"}}
+	return []parser.RequireInfo{parser.RequireInfo{Name: "gen-go/" + t.appName, Path: "../gen-go/" + t.appName, Version: "v1.0.0"}, parser.RequireInfo{Name: "github.com/apache/thrift", Path: "github.com/apache/thrift", Version: "v0.16.0"}}
 }
 
 func (t *ThriftGenerator) GetImports(hasUserDefinedObjs bool) []parser.ImportInfo {
