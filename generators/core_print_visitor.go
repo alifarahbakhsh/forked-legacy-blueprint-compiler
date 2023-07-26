@@ -8,13 +8,13 @@ import (
 
 type PrintVisitor struct {
 	DefaultVisitor
-	logger *log.Logger
+	logger      *log.Logger
 	indentLevel int
 	printString string
 }
 
 func NewPrintVisitor(logger *log.Logger) *PrintVisitor {
-	return &PrintVisitor{DefaultVisitor{}, logger, 0,""}
+	return &PrintVisitor{DefaultVisitor{}, logger, 0, ""}
 }
 
 func (v *PrintVisitor) getIndentString() string {
@@ -69,7 +69,7 @@ func (v *PrintVisitor) VisitFuncServiceNode(_ Visitor, n *FuncServiceNode) {
 		v.indentLevel += 1
 		param.Accept(v)
 		v.indentLevel -= 1
-		if idx != len(n.Params) - 1 {
+		if idx != len(n.Params)-1 {
 			v.printString += ","
 		}
 	}
@@ -78,7 +78,7 @@ func (v *PrintVisitor) VisitFuncServiceNode(_ Visitor, n *FuncServiceNode) {
 		v.indentLevel += 1
 		modifier.Accept(v)
 		v.indentLevel -= 1
-		if idx != len(n.ClientModifiers) - 1 {
+		if idx != len(n.ClientModifiers)-1 {
 			v.printString += ","
 		}
 	}
@@ -87,7 +87,7 @@ func (v *PrintVisitor) VisitFuncServiceNode(_ Visitor, n *FuncServiceNode) {
 		v.indentLevel += 1
 		modifier.Accept(v)
 		v.indentLevel -= 1
-		if idx != len(n.ServerModifiers) - 1 {
+		if idx != len(n.ServerModifiers)-1 {
 			v.printString += ","
 		}
 	}
@@ -100,7 +100,7 @@ func (v *PrintVisitor) VisitQueueServiceNode(_ Visitor, n *QueueServiceNode) {
 		v.indentLevel += 1
 		param.Accept(v)
 		v.indentLevel -= 1
-		if idx != len(n.Params) - 1 {
+		if idx != len(n.Params)-1 {
 			v.printString += ","
 		}
 	}
@@ -109,7 +109,7 @@ func (v *PrintVisitor) VisitQueueServiceNode(_ Visitor, n *QueueServiceNode) {
 		v.indentLevel += 1
 		modifier.Accept(v)
 		v.indentLevel -= 1
-		if idx != len(n.ClientModifiers) - 1 {
+		if idx != len(n.ClientModifiers)-1 {
 			v.printString += ","
 		}
 	}
@@ -118,7 +118,7 @@ func (v *PrintVisitor) VisitQueueServiceNode(_ Visitor, n *QueueServiceNode) {
 		v.indentLevel += 1
 		modifier.Accept(v)
 		v.indentLevel -= 1
-		if idx != len(n.ServerModifiers) - 1 {
+		if idx != len(n.ServerModifiers)-1 {
 			v.printString += ","
 		}
 	}
@@ -131,7 +131,7 @@ func (v *PrintVisitor) VisitInstanceParameter(_ Visitor, n *InstanceParameter) {
 		v.indentLevel += 1
 		modifier.Accept(v)
 		v.indentLevel -= 1
-		if idx != len(n.ClientModifiers) - 1 {
+		if idx != len(n.ClientModifiers)-1 {
 			v.printString += ","
 		}
 	}
@@ -146,7 +146,7 @@ func (v *PrintVisitor) modifier_str(prefix string, modifier_name string, params 
 	v.printString += modifier_name + "("
 	for idx, param := range params {
 		param.Accept(v)
-		if idx != len(params) - 1 {
+		if idx != len(params)-1 {
 			v.printString += ","
 		}
 	}
@@ -193,25 +193,29 @@ func (v *PrintVisitor) VisitCircuitBreakerModifier(_ Visitor, n *CircuitBreakerM
 	v.modifier_str(v.getIndentString(), "CircuitBreakerModifier", n.Params)
 }
 
+func (v *PrintVisitor) VisitHealthCheckModifier(_ Visitor, n *HealthCheckModifier) {
+	v.modifier_str(v.getIndentString(), "HealthCheckModifier", n.Params)
+}
+
 func (v *PrintVisitor) component_str(name string, node_name string, params []Parameter, ClientModifiers []Modifier, ServerModifiers []Modifier) {
 	v.printString += v.getIndentString() + name + " = " + node_name + "("
 	for idx, param := range params {
 		param.Accept(v)
-		if idx != len(params) - 1 {
+		if idx != len(params)-1 {
 			v.printString += ","
 		}
 	}
 	v.printString += ").WithClient("
 	for idx, modifier := range ClientModifiers {
 		modifier.Accept(v)
-		if idx != len(ClientModifiers) - 1 {
+		if idx != len(ClientModifiers)-1 {
 			v.printString += ","
 		}
 	}
 	v.printString += ").WithServer("
 	for idx, modifier := range ServerModifiers {
 		modifier.Accept(v)
-		if idx != len(ServerModifiers) - 1 {
+		if idx != len(ServerModifiers)-1 {
 			v.printString += ","
 		}
 	}
