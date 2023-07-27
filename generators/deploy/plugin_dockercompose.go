@@ -3,8 +3,8 @@ package deploy
 import (
 	"os"
 	"path"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 type DockerComposeDeployerGenerator struct {
@@ -58,6 +58,10 @@ func (d *DockerComposeDeployerGenerator) AddChoice(name string, depInfo *DeployI
 		for key, val := range depInfo.EnvVars {
 			d.composeString += prefix + prefix + prefix + "- " + key + "=" + val + "\n"
 		}
+	}
+	if len(depInfo.Command) != 0 {
+		d.composeString += prefix + prefix + "command:\n"
+		d.composeString += prefix + prefix + prefix + "[" + strings.Join(depInfo.Command, ", ") + "]\n"
 	}
 	d.composeString += prefix + prefix + "restart: always\n\n"
 }

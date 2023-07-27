@@ -49,6 +49,7 @@ type MainVisitor struct {
 	added_imports    map[string]bool
 	frameworks       map[string]netgen.NetworkGenerator
 	DepGraph         *DependencyGraph
+	commands         []string
 	// Process Main Function state
 	localServicesInfo map[string]map[string]string
 	ProcInfo          *ProcessRunServicesInfo
@@ -184,6 +185,7 @@ func (v *MainVisitor) VisitDockerContainerNode(_ Visitor, n *DockerContainerNode
 	v.public_ports = make(map[int]int)
 	v.isservice = true
 	v.imageName = ""
+	v.commands = []string{}
 	v.DefaultVisitor.VisitDockerContainerNode(v, n)
 	// Generate Docker File for each container
 
@@ -196,7 +198,7 @@ func (v *MainVisitor) VisitDockerContainerNode(_ Visitor, n *DockerContainerNode
 	v.generateDockerFile(docker_dir, n)
 
 	if !v.isservice {
-		dockerInfo := &deploy.DeployInfo{Address: v.address, Port: v.port, DockerPath: "", ImageName: v.imageName, EnvVars: v.cur_env_vars, PublicPorts: v.public_ports}
+		dockerInfo := &deploy.DeployInfo{Address: v.address, Port: v.port, DockerPath: "", ImageName: v.imageName, EnvVars: v.cur_env_vars, PublicPorts: v.public_ports, Command: v.commands}
 		v.deployInfo = dockerInfo
 		depgen, err := v.depgenfactory.GetGenerator("docker")
 		if err != nil {
@@ -960,6 +962,8 @@ func (v *MainVisitor) VisitMemcachedNode(_ Visitor, n *MemcachedNode) {
 	v.cur_env_vars[n.Name+"_ADDRESS"] = v.address
 	v.cur_env_vars[n.Name+"_PORT"] = strconv.Itoa(v.port)
 	v.imageName = "memcached"
+	v.commands = append(v.commands, "\"-c\"")
+	v.commands = append(v.commands, "\"65536\"")
 }
 
 func (v *MainVisitor) VisitRedisNode(_ Visitor, n *RedisNode) {
