@@ -230,11 +230,13 @@ func (v *MainVisitor) generateModFile(ctr_dir string, n *DockerContainerNode) {
 	}
 	// Add Require for generated folders (THRIFT)
 	var requires []parser.RequireInfo
-	for _, netgenerator := range v.frameworks {
+	for name, netgenerator := range v.frameworks {
+		v.logger.Println("Getting requirementes for ", name)
 		framework_requires := netgenerator.GetRequirements()
 		requires = append(requires, framework_requires...)
 	}
 	for _, require := range requires {
+		v.logger.Println("Adding require ", require.Name)
 		err = f.AddRequire(require.Name, require.Version)
 		if err != nil {
 			v.logger.Fatal(err)
@@ -274,12 +276,6 @@ func (v *MainVisitor) generateModFile(ctr_dir string, n *DockerContainerNode) {
 	if err != nil {
 		v.logger.Fatal(err)
 	}
-	cmd := exec.Command("go", "mod", "tidy")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		v.logger.Fatal(string(out))
-	}
-	v.logger.Println("Tidying mod files" + string(out))
 	err = os.Chdir(prev_dir)
 	if err != nil {
 		v.logger.Fatal(err)

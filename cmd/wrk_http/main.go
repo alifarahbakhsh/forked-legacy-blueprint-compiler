@@ -120,8 +120,8 @@ func (e *Engine) RunRequest(client *http.Client, req *RequestInfo, stat_channel 
 	statusOK := resp.StatusCode >= 200 && resp.StatusCode < 300
 	if !statusOK {
 		stat.IsError = true
-		//bytes, _ := io.ReadAll(resp.Body)
-		//log.Println(string(bytes))
+		bytes, _ := io.ReadAll(resp.Body)
+		log.Println(string(bytes))
 	}
 	io.Copy(ioutil.Discard, resp.Body)
 	resp.Body.Close()

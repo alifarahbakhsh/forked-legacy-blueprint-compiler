@@ -354,7 +354,7 @@ func (n *XTraceNode) GenerateClientNode(info *parser.ImplInfo) {
 	con_args := []parser.ArgInfo{}
 	con_rets := []parser.ArgInfo{parser.GetPointerArg("", n.Name)}
 	constructor := parser.FuncInfo{Name: con_name, Args: con_args, Return: con_rets}
-	imports := []parser.ImportInfo{parser.ImportInfo{ImportName: "", FullName: "genz/stdlib/choices/tracer"}, parser.ImportInfo{ImportName: "", FullName: "os"}}
+	imports := []parser.ImportInfo{parser.ImportInfo{ImportName: "", FullName: MODULE_ROOT + "/stdlib/choices/tracer"}, parser.ImportInfo{ImportName: "", FullName: "os"}}
 	imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "github.com/tracingplane/tracingplane-go/tracingplane"})
 	imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "context"})
 	fields := []parser.ArgInfo{parser.GetPointerArg("internal", "tracer."+n.TypeName)}
