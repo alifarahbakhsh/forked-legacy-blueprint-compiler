@@ -31,7 +31,7 @@ func (g *DependencyGraph) topoSortHelper(root string, is_root bool, localService
 		return
 	}
 	g.visited[root] = true
-	if _, ok0 := localServices[root]; ok0 || is_root {
+	if is_root {
 		if v, ok := g.edges[root]; ok {
 			for _, edge := range v {
 				g.topoSortHelper(edge, false, localServices)
