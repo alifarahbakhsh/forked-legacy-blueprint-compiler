@@ -13,6 +13,7 @@ type DeployInfo struct {
 	EnvVars     map[string]string
 	PublicPorts map[int]int
 	NumReplicas int
+	Command     []string
 }
 
 func NewDeployInfo() *DeployInfo {
