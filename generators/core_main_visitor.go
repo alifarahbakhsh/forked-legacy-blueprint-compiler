@@ -61,6 +61,7 @@ type ProcessRunServicesInfo struct {
 	GetFuncArgs   map[string][]parser.ArgInfo
 	InstanceTypes map[string]parser.ArgInfo
 	RunFuncArgs   map[string][]parser.ArgInfo
+	Order         []string
 }
 
 func NewProcessRunServicesInfo() *ProcessRunServicesInfo {
@@ -355,8 +356,9 @@ func (v *MainVisitor) generateMainFile() {
 	for name, arg := range v.ProcInfo.InstanceTypes {
 		func_body += "\tvar " + name + " *" + v.pkgName + "." + arg.String() + "\n"
 	}
-	for name, fn_name := range v.ProcInfo.GetFuncNames {
+	for _, name := range v.ProcInfo.Order {
 		var arg_strings []string
+		fn_name := v.ProcInfo.GetFuncNames[name]
 		fn_args := v.ProcInfo.GetFuncArgs[name]
 		for _, arg := range fn_args {
 			arg_strings = append(arg_strings, arg.Name)
@@ -615,6 +617,7 @@ func (v *MainVisitor) VisitFuncServiceNode(_ Visitor, n *FuncServiceNode) {
 		func_string += strings.Join(ret_strings, ", ")
 	}
 	v.ProcInfo.GetFuncNames[n.Name] = func_name
+	v.ProcInfo.Order = append(v.ProcInfo.Order, n.Name)
 	v.ProcInfo.InstanceTypes[n.Name] = parser.GetBasicArg("", base_type)
 	v.ProcInfo.GetFuncArgs[n.Name] = args
 	func_string += " {\n"
