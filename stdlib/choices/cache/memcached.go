@@ -8,23 +8,27 @@ import (
 	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/stdlib"
 )
 
-type MCConnection struct{}
+type MCConnection struct{
+	Client *memcache.Client
+}
 
-func NewCacheConn() *MCConnection {
-	return &MCConnection{}
+func NewCacheConn(addr string, port string) *MCConnection {
+	conn_addr := addr + ":" + port
+	client := memcache.New(conn_addr)
+	client.MaxIdleConns = 60000
+	return &MCConnection{Client : client}
 }
 
 type Memcached struct {
-	client   *memcache.Client
 	connPool *stdlib.ClientPool[*MCConnection]
 }
 
 func NewMemcachedClient(addr string, port string) *Memcached {
-	conn_addr := addr + ":" + port
-	client := memcache.New(conn_addr)
-	client.MaxIdleConns = 60000
-	pool := stdlib.NewClientPool[*MCConnection](1024, NewCacheConn)
-	return &Memcached{client: client, connPool: pool}
+	NewConn := func() *MCConnection {
+		return NewCacheConn(addr, port)
+	}
+	pool := stdlib.NewClientPool[*MCConnection](1024, NewConn)
+	return &Memcached{connPool: pool}
 }
 
 func (m *Memcached) Put(key string, value interface{}) error {
@@ -34,13 +38,13 @@ func (m *Memcached) Put(key string, value interface{}) error {
 	if err != nil {
 		return err
 	}
-	return m.client.Set(&memcache.Item{Key: key, Value: marshaled_val})
+	return conn.Client.Set(&memcache.Item{Key: key, Value: marshaled_val})
 }
 
 func (m *Memcached) Get(key string, value interface{}) error {
 	conn := m.connPool.Pop()
 	defer m.connPool.Push(conn)
-	it, err := m.client.Get(key)
+	it, err := conn.Client.Get(key)
 	if err != nil {
 		return err
 	}
@@ -50,20 +54,20 @@ func (m *Memcached) Get(key string, value interface{}) error {
 func (m *Memcached) Incr(key string) (int64, error) {
 	conn := m.connPool.Pop()
 	defer m.connPool.Push(conn)
-	val, err := m.client.Increment(key, 1)
+	val, err := conn.Client.Increment(key, 1)
 	return int64(val), err
 }
 
 func (m *Memcached) Delete(key string) error {
 	conn := m.connPool.Pop()
 	defer m.connPool.Push(conn)
-	return m.client.Delete(key)
+	return conn.Client.Delete(key)
 }
 
 func (m *Memcached) Mget(keys []string, values []interface{}) error {
 	conn := m.connPool.Pop()
 	defer m.connPool.Push(conn)
-	val_map, err := m.client.GetMulti(keys)
+	val_map, err := conn.Client.GetMulti(keys)
 	if err != nil {
 		return err
 	}
@@ -84,9 +88,7 @@ func (m *Memcached) Mset(keys []string, values []interface{}) error {
 	err_chan := make(chan error, len(keys))
 	for idx, key := range keys {
 		go func(key string, val interface{}) {
-			conn := m.connPool.Pop()
 			defer wg.Done()
-			defer m.connPool.Push(conn)
 			err_chan <- m.Put(key, val)
 		}(key, values[idx])
 	}
