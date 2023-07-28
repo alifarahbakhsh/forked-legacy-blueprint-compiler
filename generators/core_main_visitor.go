@@ -50,11 +50,14 @@ type MainVisitor struct {
 	frameworks       map[string]netgen.NetworkGenerator
 	DepGraph         *DependencyGraph
 	commands         []string
+	entrypoint       []string
+	volumes          []string
 	// Process Main Function state
 	localServicesInfo map[string]map[string]string
 	ProcInfo          *ProcessRunServicesInfo
 	curProcName       string
 	localServices     map[string]string
+	scriptGenerators  []ExtraScriptGenerator
 }
 
 type ProcessRunServicesInfo struct {
@@ -147,6 +150,17 @@ func (v *MainVisitor) VisitMillenialNode(_ Visitor, n *MillenialNode) {
 			v.logger.Fatal(err)
 		}
 	}
+
+	for _, generator := range v.scriptGenerators {
+		fp, err := filepath.Abs(v.out_dir)
+		if err != nil {
+			v.logger.Fatal(err)
+		}
+		err = generator.Generate(fp)
+		if err != nil {
+			v.logger.Fatal(err)
+		}
+	}
 }
 
 func (v *MainVisitor) VisitAnsibleContainerNode(_ Visitor, n *AnsibleContainerNode) {
@@ -186,6 +200,8 @@ func (v *MainVisitor) VisitDockerContainerNode(_ Visitor, n *DockerContainerNode
 	v.isservice = true
 	v.imageName = ""
 	v.commands = []string{}
+	v.entrypoint = []string{}
+	v.volumes = []string{}
 	v.DefaultVisitor.VisitDockerContainerNode(v, n)
 	// Generate Docker File for each container
 
@@ -198,7 +214,7 @@ func (v *MainVisitor) VisitDockerContainerNode(_ Visitor, n *DockerContainerNode
 	v.generateDockerFile(docker_dir, n)
 
 	if !v.isservice {
-		dockerInfo := &deploy.DeployInfo{Address: v.address, Port: v.port, DockerPath: "", ImageName: v.imageName, EnvVars: v.cur_env_vars, PublicPorts: v.public_ports, Command: v.commands}
+		dockerInfo := &deploy.DeployInfo{Address: v.address, Port: v.port, DockerPath: "", ImageName: v.imageName, EnvVars: v.cur_env_vars, PublicPorts: v.public_ports, Command: v.commands, Entrypoint: v.entrypoint, Volumes: v.volumes}
 		v.deployInfo = dockerInfo
 		depgen, err := v.depgenfactory.GetGenerator("docker")
 		if err != nil {
@@ -986,6 +1002,17 @@ func (v *MainVisitor) VisitMongoDBNode(_ Visitor, n *MongoDBNode) {
 	v.cur_env_vars[n.Name+"_ADDRESS"] = v.address
 	v.cur_env_vars[n.Name+"_PORT"] = strconv.Itoa(v.port)
 	v.imageName = "mongo"
+	if n.IsReplicated {
+		entrypoint_args := []string{"\"/usr/bin/mongod\"", "\"--bind_ip_all\"", "\"--replSet\"", "\"" + n.ReplicaSetName + "\""}
+		v.entrypoint = append(v.entrypoint, entrypoint_args...)
+		if n.IsPrimary {
+			script_name := "rs-init-" + n.ReplicaSetName + ".sh"
+			volume := "./" + script_name + ":/" + script_name
+			v.volumes = append(v.volumes, volume)
+		}
+		n.ReplHandler.Hosts[n.Name] = v.address + ":" + strconv.Itoa(v.port)
+		v.scriptGenerators = append(v.scriptGenerators, n.ScriptGenerator)
+	}
 }
 
 func (v *MainVisitor) VisitRabbitMQNode(_ Visitor, n *RabbitMQNode) {

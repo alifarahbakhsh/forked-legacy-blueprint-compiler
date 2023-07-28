@@ -29,6 +29,10 @@ func InitIRRegistry(logger *log.Logger) *IRExtensionRegistry {
 	return &IRExtensionRegistry{Registry: reg, logger: logger}
 }
 
+type ExtraScriptGenerator interface {
+	Generate(out_dir string) error
+}
+
 func (r *IRExtensionRegistry) GetNode(node parser.DetailNode) Node {
 	if fn, ok := r.Registry[node.Type]; ok {
 		return fn(node)
