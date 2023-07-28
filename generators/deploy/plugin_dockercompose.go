@@ -22,6 +22,7 @@ func (d *DockerComposeDeployerGenerator) AddService(name string, depInfo *Deploy
 	d.composeString += prefix + prefix + "build:\n"
 	d.composeString += prefix + prefix + prefix + "context: .\n"
 	d.composeString += prefix + prefix + prefix + "dockerfile: ./" + depInfo.DockerPath + "/Dockerfile\n"
+	d.composeString += prefix + prefix + "container_name: " + name + "\n"
 	d.composeString += prefix + prefix + "hostname: " + pub_address + "\n"
 	if depInfo.NumReplicas > 0 {
 		d.composeString += prefix + prefix + "deploy:\n"
@@ -46,6 +47,7 @@ func (d *DockerComposeDeployerGenerator) AddChoice(name string, depInfo *DeployI
 	pub_address := depInfo.Address
 	d.composeString += prefix + strings.ToLower(name) + ":\n"
 	d.composeString += prefix + prefix + "image: " + depInfo.ImageName + "\n"
+	d.composeString += prefix + prefix + "container_name: " + name + "\n"
 	d.composeString += prefix + prefix + "hostname: " + pub_address + "\n"
 	if len(depInfo.Volumes) != 0 {
 		d.composeString += prefix + prefix + "volumes:\n"
