@@ -162,8 +162,9 @@ func (d *DefaultWebGenerator) generateClientMethod(handler_name string, service_
 	body += "\treturn " + strings.Join(err_ret_names, ", ") + ", err\n"
 	body += "}\n"
 	body += "defer resp.Body.Close()\n"
-	// TODO: Get correct response name
-	response_name := ""
+	// Get correct response name
+	service_map := d.service_responses[service_name]
+	response_name := service_map[funcInfo.Name]
 	body += "var response " + response_name
 	body += "json.NewDecoder(resp.Body).Decode(&response)\n"
 	body += "return " + strings.Join(ret_names, ", ") + ", nil\n"
