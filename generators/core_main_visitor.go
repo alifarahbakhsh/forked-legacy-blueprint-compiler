@@ -213,6 +213,13 @@ func (v *MainVisitor) VisitDockerContainerNode(_ Visitor, n *DockerContainerNode
 	v.generateModFile(v.curDir, n)
 	v.generateDockerFile(docker_dir, n)
 
+	if val, ok := n.Options["public_ports"]; ok {
+		value, err := strconv.ParseBool(val)
+		if err == nil && value {
+			v.public_ports[v.port] = v.port
+		}
+	}
+
 	if !v.isservice {
 		dockerInfo := &deploy.DeployInfo{Address: v.address, Port: v.port, DockerPath: "", ImageName: v.imageName, EnvVars: v.cur_env_vars, PublicPorts: v.public_ports, Command: v.commands, Entrypoint: v.entrypoint, Volumes: v.volumes}
 		v.deployInfo = dockerInfo

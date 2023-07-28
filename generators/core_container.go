@@ -9,7 +9,7 @@ import (
 type DockerContainerNode struct {
 	Name     string
 	Children []Node
-	Options  map[string]interface{}
+	Options  map[string]string
 }
 
 type AnsibleContainerNode struct {
@@ -89,7 +89,7 @@ func (n *NoOpContainerNode) GetNodes(nodeType string) []Node {
 
 func GetDeployerNode(deployer parser.ModifierNode, Name string, Children []Node) (Container, error) {
 	var deployer_name string
-	deployer_opts := make(map[string]interface{})
+	deployer_opts := make(map[string]string)
 	for _, arg := range deployer.ModifierParams {
 		if arg.KeywordName == "framework" {
 			deployer_name = arg.Value
