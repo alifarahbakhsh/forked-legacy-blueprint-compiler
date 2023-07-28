@@ -47,6 +47,12 @@ func (d *DockerComposeDeployerGenerator) AddChoice(name string, depInfo *DeployI
 	d.composeString += prefix + strings.ToLower(name) + ":\n"
 	d.composeString += prefix + prefix + "image: " + depInfo.ImageName + "\n"
 	d.composeString += prefix + prefix + "hostname: " + pub_address + "\n"
+	if len(depInfo.Volumes) != 0 {
+		d.composeString += prefix + prefix + "volumes:\n"
+		for _, vol := range depInfo.Volumes {
+			d.composeString += prefix + prefix + prefix + "- " + vol + "\n"
+		}
+	}
 	if len(depInfo.PublicPorts) != 0 {
 		d.composeString += prefix + prefix + "ports:\n"
 		for port1, port2 := range depInfo.PublicPorts {
@@ -62,6 +68,9 @@ func (d *DockerComposeDeployerGenerator) AddChoice(name string, depInfo *DeployI
 	if len(depInfo.Command) != 0 {
 		d.composeString += prefix + prefix + "command:\n"
 		d.composeString += prefix + prefix + prefix + "[" + strings.Join(depInfo.Command, ", ") + "]\n"
+	}
+	if len(depInfo.Entrypoint) != 0 {
+		d.composeString += prefix + prefix + "entrypoint: [" + strings.Join(depInfo.Entrypoint, ", ") + "]\n"
 	}
 	d.composeString += prefix + prefix + "restart: always\n\n"
 }

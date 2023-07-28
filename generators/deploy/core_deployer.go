@@ -14,6 +14,8 @@ type DeployInfo struct {
 	PublicPorts map[int]int
 	NumReplicas int
 	Command     []string
+	Entrypoint  []string
+	Volumes     []string
 }
 
 func NewDeployInfo() *DeployInfo {
