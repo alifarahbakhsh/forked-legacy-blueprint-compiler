@@ -1,0 +1,47 @@
+syntax="proto3";
+option go_package="gen-go/leaf";
+package leaf;
+
+message LeafObject {
+	int64 ID = 1;
+	string Name = 2;
+}
+
+message LeafServiceImpl_LeafResponse{
+	int64 RetVal0 = 1;
+}
+
+message LeafServiceImpl_ObjectResponse{
+	LeafObject RetVal0 = 1;
+}
+
+message NonLeafServiceImpl_LeafResponse{
+	int64 RetVal0 = 1;
+}
+
+
+message LeafServiceImpl_LeafRequest{
+	int64 a = 1;
+	string jaegerTracer_trace_ctx = 2;
+}
+
+message LeafServiceImpl_ObjectRequest{
+	LeafObject obj = 1;
+	string jaegerTracer_trace_ctx = 2;
+}
+
+message NonLeafServiceImpl_LeafRequest{
+	int64 a = 1;
+	string jaegerTracer_trace_ctx = 2;
+}
+
+
+service LeafServiceImpl{
+	rpc Leaf (LeafServiceImpl_LeafRequest) returns (LeafServiceImpl_LeafResponse) {}
+	rpc Object (LeafServiceImpl_ObjectRequest) returns (LeafServiceImpl_ObjectResponse) {}
+}
+
+service NonLeafServiceImpl{
+	rpc Leaf (NonLeafServiceImpl_LeafRequest) returns (NonLeafServiceImpl_LeafResponse) {}
+}
+

@@ -30,6 +30,7 @@ func InitModifierRegistry(logger *log.Logger) *ModifierRegistry {
 	reg["Retry"] = GenerateRetryModifier
 	reg["LoadBalancer"] = GenerateLoadBalancerModifier
 	reg["CircuitBreaker"] = GenerateCircuitBreakerModifier
+	reg["HealthChecker"] = GenerateHealthCheckModifier
 
 	// Modifiers that are at network boundaries
 	boundaries["RPCServer"] = true

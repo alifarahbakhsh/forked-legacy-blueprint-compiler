@@ -2,11 +2,11 @@ package generators
 
 type Visitor interface {
 	// Root Node
-	VisitMillenialNode(v Visitor, n* MillenialNode)
+	VisitMillenialNode(v Visitor, n *MillenialNode)
 
 	// Container Nodes
 	VisitAnsibleContainerNode(v Visitor, n *AnsibleContainerNode)
-	VisitDockerContainerNode(v Visitor, n* DockerContainerNode)
+	VisitDockerContainerNode(v Visitor, n *DockerContainerNode)
 	VisitKubernetesContainerNode(v Visitor, n *KubernetesContainerNode)
 	VisitNoOpContainerNode(v Visitor, n *NoOpContainerNode)
 
@@ -32,6 +32,7 @@ type Visitor interface {
 	VisitRetryModifier(v Visitor, n *RetryModifier)
 	VisitLoadBalancerModifier(v Visitor, n *LoadBalancerModifier)
 	VisitCircuitBreakerModifier(v Visitor, n *CircuitBreakerModifier)
+	VisitHealthCheckModifier(v Visitor, n *HealthCheckModifier)
 
 	// Component Nodes
 	VisitLoadBalancerNode(v Visitor, n *LoadBalancerNode)
@@ -48,7 +49,7 @@ type Visitor interface {
 	VisitMySqlDBNode(v Visitor, n *MySqlDBNode)
 }
 
-type DefaultVisitor struct {}
+type DefaultVisitor struct{}
 
 func (_ *DefaultVisitor) VisitMillenialNode(v Visitor, n *MillenialNode) {
 	for _, node := range n.Children {
@@ -113,7 +114,7 @@ func (_ *DefaultVisitor) VisitQueueServiceNode(v Visitor, n *QueueServiceNode) {
 	}
 	for _, node := range n.ServerModifiers {
 		node.Accept(v)
-	}	
+	}
 }
 
 func (_ *DefaultVisitor) VisitValueParameter(v Visitor, n *ValueParameter) {
@@ -186,6 +187,12 @@ func (_ *DefaultVisitor) VisitCircuitBreakerModifier(v Visitor, n *CircuitBreake
 	}
 }
 
+func (_ *DefaultVisitor) VisitHealthCheckModifier(v Visitor, n *HealthCheckModifier) {
+	for _, node := range n.Params {
+		node.Accept(v)
+	}
+}
+
 func (_ *DefaultVisitor) VisitLoadBalancerNode(v Visitor, n *LoadBalancerNode) {
 	for _, node := range n.Params {
 		node.Accept(v)
@@ -207,7 +214,7 @@ func (_ *DefaultVisitor) VisitLocalMetricNode(v Visitor, n *LocalMetricNode) {
 	}
 	for _, node := range n.ServerModifiers {
 		node.Accept(v)
-	}	
+	}
 }
 
 func (_ *DefaultVisitor) VisitJaegerNode(v Visitor, n *JaegerNode) {
@@ -219,7 +226,7 @@ func (_ *DefaultVisitor) VisitJaegerNode(v Visitor, n *JaegerNode) {
 	}
 	for _, node := range n.ServerModifiers {
 		node.Accept(v)
-	}	
+	}
 }
 
 func (_ *DefaultVisitor) VisitZipkinNode(v Visitor, n *ZipkinNode) {
@@ -279,7 +286,7 @@ func (_ *DefaultVisitor) VisitMongoDBNode(v Visitor, n *MongoDBNode) {
 	}
 	for _, node := range n.ServerModifiers {
 		node.Accept(v)
-	}	
+	}
 }
 
 func (_ *DefaultVisitor) VisitRabbitMQNode(v Visitor, n *RabbitMQNode) {
@@ -291,7 +298,7 @@ func (_ *DefaultVisitor) VisitRabbitMQNode(v Visitor, n *RabbitMQNode) {
 	}
 	for _, node := range n.ServerModifiers {
 		node.Accept(v)
-	}	
+	}
 }
 
 func (_ *DefaultVisitor) VisitMySqlDBNode(v Visitor, n *MySqlDBNode) {

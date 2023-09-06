@@ -24,7 +24,8 @@ valid_server_modifiers = {
     "WebServer",
     "Deployer",
     "XTraceModifier",
-    "PlatformReplication"
+    "PlatformReplication",
+    "HealthChecker"
 }
 
 class ModifierRegistry:
