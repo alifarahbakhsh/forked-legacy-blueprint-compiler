@@ -951,6 +951,20 @@ func (v *MainVisitor) VisitJaegerNode(_ Visitor, n *JaegerNode) {
 	v.public_ports[5778] = 5778
 }
 
+func (v *MainVisitor) VisitConsulNode(_ Visitor, n *ConsulNode) {
+	v.copyEnvVars(n.DepInfo.EnvVars)
+	v.isservice = false
+	v.address = n.DepInfo.Address
+	v.hostname = n.DepInfo.Hostname
+	v.port = n.DepInfo.Port
+	v.cur_env_vars[n.Name+"_ADDRESS"] = v.address
+	v.cur_env_vars[n.Name+"_PORT"] = strconv.Itoa(v.port)
+	v.public_ports[v.port] = 8500
+	v.public_ports[8400] = 8400
+	v.public_ports[8300] = 8300
+	v.imageName = "hashicorp/consul:latest"
+}
+
 func (v *MainVisitor) VisitZipkinNode(_ Visitor, n *ZipkinNode) {
 	v.copyEnvVars(n.DepInfo.EnvVars)
 	v.isservice = false

@@ -197,6 +197,10 @@ func (v *PrintVisitor) VisitHealthCheckModifier(_ Visitor, n *HealthCheckModifie
 	v.modifier_str(v.getIndentString(), "HealthCheckModifier", n.Params)
 }
 
+func (v *PrintVisitor) VisitConsulModifier(_ Visitor, n *ConsulModifier) {
+	v.modifier_str(v.getIndentString(), "ConsulModifier", n.Params)
+}
+
 func (v *PrintVisitor) component_str(name string, node_name string, params []Parameter, ClientModifiers []Modifier, ServerModifiers []Modifier) {
 	v.printString += v.getIndentString() + name + " = " + node_name + "("
 	for idx, param := range params {
@@ -260,4 +264,8 @@ func (v *PrintVisitor) VisitRabbitMQNode(_ Visitor, n *RabbitMQNode) {
 
 func (v *PrintVisitor) VisitMySqlDBNode(_ Visitor, n *MySqlDBNode) {
 	v.component_str(n.Name, "MySqlDBNode", n.Params, n.ClientModifiers, n.ServerModifiers)
+}
+
+func (v *PrintVisitor) VisitConsulNode(_ Visitor, n *ConsulNode) {
+	v.component_str(n.Name, "ConsulNode", n.Params, n.ClientModifiers, n.ServerModifiers)
 }

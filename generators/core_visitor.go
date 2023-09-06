@@ -33,6 +33,7 @@ type Visitor interface {
 	VisitLoadBalancerModifier(v Visitor, n *LoadBalancerModifier)
 	VisitCircuitBreakerModifier(v Visitor, n *CircuitBreakerModifier)
 	VisitHealthCheckModifier(v Visitor, n *HealthCheckModifier)
+	VisitConsulModifier(v Visitor, n *ConsulModifier)
 
 	// Component Nodes
 	VisitLoadBalancerNode(v Visitor, n *LoadBalancerNode)
@@ -47,6 +48,7 @@ type Visitor interface {
 	VisitMongoDBNode(v Visitor, n *MongoDBNode)
 	VisitRabbitMQNode(v Visitor, n *RabbitMQNode)
 	VisitMySqlDBNode(v Visitor, n *MySqlDBNode)
+	VisitConsulNode(v Visitor, n *ConsulNode)
 }
 
 type DefaultVisitor struct{}
@@ -193,6 +195,12 @@ func (_ *DefaultVisitor) VisitHealthCheckModifier(v Visitor, n *HealthCheckModif
 	}
 }
 
+func (_ *DefaultVisitor) VisitConsulModifier(v Visitor, n *ConsulModifier) {
+	for _, node := range n.Params {
+		node.Accept(v)
+	}
+}
+
 func (_ *DefaultVisitor) VisitLoadBalancerNode(v Visitor, n *LoadBalancerNode) {
 	for _, node := range n.Params {
 		node.Accept(v)
@@ -302,6 +310,18 @@ func (_ *DefaultVisitor) VisitRabbitMQNode(v Visitor, n *RabbitMQNode) {
 }
 
 func (_ *DefaultVisitor) VisitMySqlDBNode(v Visitor, n *MySqlDBNode) {
+	for _, node := range n.Params {
+		node.Accept(v)
+	}
+	for _, node := range n.ClientModifiers {
+		node.Accept(v)
+	}
+	for _, node := range n.ServerModifiers {
+		node.Accept(v)
+	}
+}
+
+func (_ *DefaultVisitor) VisitConsulNode(v Visitor, n *ConsulNode) {
 	for _, node := range n.Params {
 		node.Accept(v)
 	}

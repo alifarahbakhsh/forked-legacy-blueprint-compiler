@@ -203,3 +203,19 @@ func (v *BasicDeployVisitor) VisitMySqlDBNode(_ Visitor, n *MySqlDBNode) {
 	}
 	v.logger.Println("Assigned address:", n.DepInfo.Address, ":", n.DepInfo.Port, "to", n.Name)
 }
+
+func (v *BasicDeployVisitor) VisitConsulNode(_ Visitor, n *ConsulNode) {
+	v.modifyEnvMap(n.Name, n.DepInfo.EnvVars)
+	if addr, ok := v.addresses[n.Name]; ok {
+		n.DepInfo.Address = addr.Address
+		n.DepInfo.Hostname = addr.Hostname
+		n.DepInfo.Port = v.portAuthority.GetAvailablePort(addr.Address, addr.Port)
+	} else {
+		defaultAddress := "localhost"
+		n.DepInfo.Hostname = defaultAddress
+		defaultPort := 8500
+		n.DepInfo.Address = defaultAddress
+		n.DepInfo.Port = v.portAuthority.GetAvailablePort(defaultAddress, defaultPort)
+	}
+	v.logger.Println("Assigned address:", n.DepInfo.Address, ":", n.DepInfo.Port, "to", n.Name)
+}

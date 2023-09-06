@@ -668,3 +668,7 @@ func (t *ThriftGenerator) getThriftTypeString(typeInfo parser.TypeInfo) (string,
 	}
 	return "", errors.New("Unsupported type for thrift: " + typeInfo.BaseType.String())
 }
+
+func (t *ThriftGenerator) SetCustomParameters(params map[string]string) {
+	// Has no custom parameters
+}

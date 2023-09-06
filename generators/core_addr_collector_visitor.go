@@ -5,15 +5,15 @@ import (
 )
 
 type ConnInfo struct {
-	Address string
+	Address  string
 	Hostname string
-	Port int
+	Port     int
 }
 
 type AddrCollectorVisitor struct {
 	DefaultVisitor
 	logger *log.Logger
-	Addrs map[string]ConnInfo
+	Addrs  map[string]ConnInfo
 }
 
 func NewAddrCollectorVisitor(logger *log.Logger) *AddrCollectorVisitor {
@@ -67,6 +67,11 @@ func (v *AddrCollectorVisitor) VisitRabbitMQNode(_ Visitor, n *RabbitMQNode) {
 }
 
 func (v *AddrCollectorVisitor) VisitMySqlDBNode(_ Visitor, n *MySqlDBNode) {
+	cinfo := ConnInfo{Address: n.DepInfo.Address, Port: n.DepInfo.Port, Hostname: n.DepInfo.Hostname}
+	v.Addrs[n.Name] = cinfo
+}
+
+func (v *AddrCollectorVisitor) VisitConsulNode(_ Visitor, n *ConsulNode) {
 	cinfo := ConnInfo{Address: n.DepInfo.Address, Port: n.DepInfo.Port, Hostname: n.DepInfo.Hostname}
 	v.Addrs[n.Name] = cinfo
 }

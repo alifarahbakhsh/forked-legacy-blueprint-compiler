@@ -7,7 +7,8 @@ COMPONENTS = {
     "Tracer": True, 
     "MetricCollector": True, 
     "XTracer": True,
-    "LoadBalancer": True
+    "LoadBalancer": True,
+    "Registry": True
 }
 
 valid_client_modifiers = {
@@ -25,7 +26,8 @@ valid_server_modifiers = {
     "Deployer",
     "XTraceModifier",
     "PlatformReplication",
-    "HealthChecker"
+    "HealthChecker",
+    "ConsulModifier"
 }
 
 class ModifierRegistry:
