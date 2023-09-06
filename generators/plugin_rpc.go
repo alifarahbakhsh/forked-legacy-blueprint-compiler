@@ -94,14 +94,21 @@ func (m *RPCServerModifier) getTimeout() string {
 }
 
 func (m *RPCServerModifier) parseCustomParams() {
+	var new_params []Parameter
 	for _, p := range m.Params {
 		switch param := p.(type) {
 		case *InstanceParameter:
+			new_params = append(new_params, p)
 			continue
 		case *ValueParameter:
-			m.param_map[param.KeywordName] = param.Value
+			if param.KeywordName == "resolver" {
+				m.param_map[param.KeywordName] = param.Value
+			} else {
+				new_params = append(new_params, p)
+			}
 		}
 	}
+	m.Params = new_params
 }
 
 func (m *RPCServerModifier) GetFrameworkInfo() (string, netgen.NetworkGenerator, error) {

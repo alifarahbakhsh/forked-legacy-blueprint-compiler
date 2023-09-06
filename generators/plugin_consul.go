@@ -52,6 +52,8 @@ func (m *ConsulModifier) getServerImports() []parser.ImportInfo {
 	var imports []parser.ImportInfo
 	imports = append(imports, parser.ImportInfo{ImportName: "", FullName: MODULE_ROOT + "/stdlib/components"})
 	imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "os"})
+	imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "context"})
+	imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "strconv"})
 	return imports
 }
 
@@ -70,7 +72,8 @@ func (m *ConsulModifier) getConstructor(name string, prev_node *ServiceImplInfo)
 	body := ""
 	body += "addr := os.Getenv(\"" + prev_node.InstanceName + "_ADDRESS\")\n"
 	body += "port := os.Getenv(\"" + prev_node.InstanceName + "_PORT\")\n"
-	body += "reg.Register(service_id, service_name, addr, port)\n"
+	body += "port_val, _ := strconv.ParseInt(port, 10, 64)\n"
+	body += "reg.Register(service_id, service_name, addr, port_val)\n"
 	body += "return &" + name + "{service:service, service_name: service_name, reg: reg}"
 	return parser.FuncInfo{Name: func_name, Args: args, Return: ret_args}, body
 }
@@ -148,7 +151,9 @@ func (n *ConsulNode) getConstructorBody(info *parser.ImplInfo) string {
 	body := ""
 	body += "addr := os.Getenv(\"" + n.Name + "_ADDRESS\")\n"
 	body += "port := os.Getenv(\"" + n.Name + "_PORT\")\n"
-	body += "reg := registry.NewConsulRegistry(addr,port)\n"
+	body += "port_val, _ := strconv.ParseInt(port, 10, 64)\n"
+	body += "reg, err := registry.NewConsulRegistry(addr, int(port_val))\n"
+	body += "if err != nil {\n\tlog.Fatal(err)\n}\n"
 	body += "return &" + n.Name + "{reg: reg}\n"
 	return body
 }
@@ -159,7 +164,7 @@ func (n *ConsulNode) GenerateClientNode(info *parser.ImplInfo) {
 	con_args := []parser.ArgInfo{}
 	con_rets := []parser.ArgInfo{parser.GetPointerArg("", n.Name)}
 	constructor := parser.FuncInfo{Name: con_name, Args: con_args, Return: con_rets}
-	imports := []parser.ImportInfo{parser.ImportInfo{ImportName: "", FullName: "os"}, parser.ImportInfo{ImportName: "", FullName: MODULE_ROOT + "/stdlib/choices/registry"}}
+	imports := []parser.ImportInfo{parser.ImportInfo{ImportName: "", FullName: "os"}, parser.ImportInfo{ImportName: "", FullName: MODULE_ROOT + "/stdlib/choices/registry"}, parser.ImportInfo{ImportName: "", FullName: "strconv"}, parser.ImportInfo{ImportName: "", FullName: "log"}}
 	fields := []parser.ArgInfo{parser.GetPointerArg("reg", "registry.ConsulRegistry")}
 	bodies := make(map[string]string)
 	bodies[con_name] = n.getConstructorBody(info)
