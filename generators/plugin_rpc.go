@@ -9,7 +9,8 @@ import (
 
 type RPCServerModifier struct {
 	*NoOpSourceCodeModifier
-	Params []Parameter
+	Params    []Parameter
+	param_map map[string]string
 }
 
 func (m *RPCServerModifier) Accept(v Visitor) {
@@ -32,7 +33,9 @@ func (n *RPCServerModifier) GetNodes(nodeType string) []Node {
 }
 
 func GenerateRPCServerModifier(node parser.ModifierNode) Modifier {
-	return &RPCServerModifier{NewNoOpSourceCodeModifier(), get_params(node)}
+	modifier := &RPCServerModifier{NewNoOpSourceCodeModifier(), get_params(node), make(map[string]string)}
+	modifier.parseCustomParams()
+	return modifier
 }
 
 func (m *RPCServerModifier) GetName() string {
@@ -90,6 +93,24 @@ func (m *RPCServerModifier) getTimeout() string {
 	return timeout
 }
 
+func (m *RPCServerModifier) parseCustomParams() {
+	var new_params []Parameter
+	for _, p := range m.Params {
+		switch param := p.(type) {
+		case *InstanceParameter:
+			new_params = append(new_params, p)
+			continue
+		case *ValueParameter:
+			if param.KeywordName == "resolver" {
+				m.param_map[param.KeywordName] = param.Value
+			} else {
+				new_params = append(new_params, p)
+			}
+		}
+	}
+	m.Params = new_params
+}
+
 func (m *RPCServerModifier) GetFrameworkInfo() (string, netgen.NetworkGenerator, error) {
 	framework, err := m.getFrameworkName()
 	if err != nil {
@@ -108,6 +129,7 @@ func (m *RPCServerModifier) ModifyServer(prev_node *ServiceImplInfo) (*ServiceIm
 	if err != nil {
 		return nil, err
 	}
+	generator.SetCustomParameters(m.param_map)
 	is_metrics_on := m.isMetricsOn()
 	newMethods := copyMap(prev_node.Methods)
 	receiver_name := "rpchandler"
@@ -140,6 +162,7 @@ func (m *RPCServerModifier) ModifyClient(prev_node *ServiceImplInfo) (*ServiceIm
 	if err != nil {
 		return nil, err
 	}
+	generator.SetCustomParameters(m.param_map)
 	newMethods := copyMap(prev_node.Methods)
 	receiver_name := "rpcclient"
 	name := prev_node.BaseName + "RPCClient"

@@ -167,6 +167,16 @@ func (v *ClientCollectorVisitor) VisitMySqlDBNode(_ Visitor, n *MySqlDBNode) {
 	v.DefaultClientInfos[n.Name] = &ClientInfo{ClientModifiers: all_modifiers, ClientNode: n.ASTNodes[0], IsComponent: true}
 }
 
+func (v *ClientCollectorVisitor) VisitConsulNode(_ Visitor, n *ConsulNode) {
+	v.logger.Println("Finding default modifiers for service", n.Name)
+	all_modifiers := make([]Modifier, len(n.ServerModifiers))
+	copy(all_modifiers, n.ServerModifiers)
+	all_modifiers = append(all_modifiers, n.ClientModifiers...)
+	impl_info := v.impls[n.TypeName]
+	n.GenerateClientNode(impl_info)
+	v.DefaultClientInfos[n.Name] = &ClientInfo{ClientModifiers: all_modifiers, ClientNode: n.ASTNodes[0], IsComponent: true}
+}
+
 func NewClientCollectorVisitor(logger *log.Logger, impls map[string]*parser.ImplInfo, pathpkgs map[string]string, specDir string, remoteTypes map[string]*parser.ImplInfo, services map[string]*parser.ServiceInfo) *ClientCollectorVisitor {
 	return &ClientCollectorVisitor{DefaultVisitor{}, logger, make(map[string]*ClientInfo), impls, pathpkgs, specDir, remoteTypes, services}
 }

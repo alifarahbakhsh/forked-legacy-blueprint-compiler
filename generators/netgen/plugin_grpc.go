@@ -21,10 +21,11 @@ type GRPCGenerator struct {
 	service_responses map[string]string       // service_name + ":" + func_name -> response_name
 	service_requests  map[string]string       // service_name + ":" + func_name -> request_name
 	functions         map[string][]string     // service_name -> list of functions
+	custom_params     map[string]string
 }
 
 func NewGRPCGenerator() NetworkGenerator {
-	return &GRPCGenerator{appName: "", remoteTypes: make(map[string]RemoteTypeInfo), serviceTypes: make(map[string]ServiceInfo), responseTypes: make(map[string]ResponseInfo), service_responses: make(map[string]string), requestTypes: make(map[string]RequestInfo), service_requests: make(map[string]string), functions: make(map[string][]string)}
+	return &GRPCGenerator{appName: "", remoteTypes: make(map[string]RemoteTypeInfo), serviceTypes: make(map[string]ServiceInfo), responseTypes: make(map[string]ResponseInfo), service_responses: make(map[string]string), requestTypes: make(map[string]RequestInfo), service_requests: make(map[string]string), functions: make(map[string][]string), custom_params: make(map[string]string)}
 }
 
 func (g *GRPCGenerator) SetAppName(appName string) {
@@ -644,9 +645,21 @@ func (g *GRPCGenerator) GenerateClientConstructor(service_name string, handler_n
 	imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "os"})
 	imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "errors"})
 	imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "google.golang.org/grpc/credentials/insecure"})
+
+	resolver_name := ""
+	has_resolver := false
+	if v, ok := g.custom_params["resolver"]; ok {
+		has_resolver = true
+		resolver_name = v
+	}
 	body := ""
-	body += "addr := os.Getenv(\"" + service_name + "_ADDRESS\")\n"
-	body += "port := os.Getenv(\"" + service_name + "_PORT\")\n"
+	if !has_resolver {
+		body += "addr := os.Getenv(\"" + service_name + "_ADDRESS\")\n"
+		body += "port := os.Getenv(\"" + service_name + "_PORT\")\n"
+	} else {
+		body += "addr := os.Getenv(\"" + resolver_name + "_ADDRESS\")\n"
+		body += "port := os.Getenv(\"" + resolver_name + "_PORT\")\n"
+	}
 	body += "if addr == \"\" || port == \"\" {\n"
 	body += "\treturn nil, errors.New(\"Address or port were not set\")\n}\n"
 	body += "var opts []grpc.DialOption\n"
@@ -661,7 +674,13 @@ func (g *GRPCGenerator) GenerateClientConstructor(service_name string, handler_n
 		fields = append(fields, parser.GetBasicArg("Timeout", "time.Duration"))
 		retBody = "return &" + base_name + "RPCClient{client:client, Timeout: duration}, nil\n"
 	}
-	body += "conn, err := grpc.Dial(addr + \":\" + port, opts...)\n"
+	conn_string := "addr + \":\" + port"
+	if has_resolver {
+		conn_string = "\"consul://\" + " + conn_string + " + \"/" + service_name + "\""
+		imports = append(imports, parser.ImportInfo{ImportName: "_", FullName: "github.com/mbobakov/grpc-consul-resolver"})
+		body += "opts = append(opts, grpc.WithDefaultServiceConfig(`{\"loadBalancingPolicy\": \"round_robin\"}`))\n"
+	}
+	body += "conn, err := grpc.Dial(" + conn_string + ", opts...)\n"
 	body += "if err != nil {\n"
 	body += "\treturn nil, err\n}\n"
 	body += "client := " + g.appName + ".New" + base_name + "Client(conn)\n"
@@ -708,4 +727,11 @@ func (g *GRPCGenerator) getGrpcTypeString(typeInfo parser.TypeInfo) (string, err
 		return "repeated " + basic_type, nil
 	}
 	return "", errors.New("Unsupported type for grpc: " + typeInfo.BaseType.String())
+}
+
+func (g *GRPCGenerator) SetCustomParameters(params map[string]string) {
+	// Set custom parameters
+	for k, v := range params {
+		g.custom_params[k] = v
+	}
 }

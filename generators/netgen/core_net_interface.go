@@ -13,4 +13,5 @@ type NetworkGenerator interface {
 	GenerateServerConstructor(prev_handler string, service_name string, handler_name string, base_name string, is_metrics_on bool) (parser.FuncInfo, string, []parser.ImportInfo, []parser.ArgInfo, []parser.StructInfo)
 	GenerateClientConstructor(service_name string, handler_name string, base_name string, is_metrics_on bool, timeout string) (parser.FuncInfo, string, []parser.ImportInfo, []parser.ArgInfo, []parser.StructInfo)
 	GetRequirements() []parser.RequireInfo
+	SetCustomParameters(params map[string]string)
 }

@@ -25,6 +25,7 @@ func InitIRRegistry(logger *log.Logger) *IRExtensionRegistry {
 	reg["RabbitMQ"] = GenerateRabbitMQNode
 	reg["MySqlDB"] = GenerateMySqlDBNode
 	reg["LoadBalancer"] = GenerateLoadBalancerNode
+	reg["ConsulRegistry"] = GenerateConsulNode
 
 	return &IRExtensionRegistry{Registry: reg, logger: logger}
 }

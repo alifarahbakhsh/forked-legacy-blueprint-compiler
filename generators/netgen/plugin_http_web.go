@@ -291,3 +291,7 @@ func (d *DefaultWebGenerator) GenerateClientConstructor(service_name string, han
 	}
 	return funcInfo, body, imports, fields, structs
 }
+
+func (d *DefaultWebGenerator) SetCustomParameters(params map[string]string) {
+	// Has no custom parameters
+}
