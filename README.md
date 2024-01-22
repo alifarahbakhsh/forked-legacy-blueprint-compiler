@@ -1,6 +1,8 @@
 # Blueprint
 
-This respository is **not** the main repository for the Blueprint project.  It is only the repository that contains the Blueprint artifact from the 2023 SOSP paper.  If you are interested in using Blueprint, please visit the open-source Githab implementation at https://github.com/Blueprint-uServices.
+This is the legacy Blueprint implementation, used as the artifact for the 2023 SOSP paper.
+
+Visit https://github.com/Blueprint-uServices for the actively maintained version of Blueprint.
 
 ## __Installation Instructions__
 
