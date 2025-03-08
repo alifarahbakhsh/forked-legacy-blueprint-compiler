@@ -1,4 +1,4 @@
-module gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler
+module github.com/alifarahbakhsh/forked-legacy-blueprint-compiler
 
 go 1.18
 
