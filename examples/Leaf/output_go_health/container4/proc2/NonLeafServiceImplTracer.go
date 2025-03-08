@@ -2,7 +2,7 @@
 package proc2
 
 import (
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/stdlib/components"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/stdlib/components"
 	"context"
 	"go.opentelemetry.io/otel/trace"
 )

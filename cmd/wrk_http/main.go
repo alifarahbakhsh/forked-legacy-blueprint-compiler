@@ -17,7 +17,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/workload"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/workload"
 	rand2 "golang.org/x/exp/rand"
 	"gonum.org/v1/gonum/stat/distuv"
 )

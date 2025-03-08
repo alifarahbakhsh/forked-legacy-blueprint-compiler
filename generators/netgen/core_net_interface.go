@@ -1,6 +1,6 @@
 package netgen
 
-import "gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/parser"
+import "github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/parser"
 
 type NetworkGenerator interface {
 	GenerateServerMethods(handler_name string, service_name string, methods map[string]parser.FuncInfo, is_metrics_on bool, instance_name string) (map[string]string, error)

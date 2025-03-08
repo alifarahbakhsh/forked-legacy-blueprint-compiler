@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/stdlib/debug"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/stdlib/debug"
 )
 
 type ClientPool[T any] struct {

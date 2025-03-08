@@ -6,7 +6,7 @@ import (
 	"errors"
 	"strings"
 
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/stdlib/components"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/stdlib/components"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"

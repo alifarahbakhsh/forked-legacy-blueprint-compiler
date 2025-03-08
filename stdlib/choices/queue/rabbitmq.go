@@ -5,7 +5,7 @@ import (
 	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/stdlib/components"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/stdlib/components"
 )
 
 type RabbitMQ struct {

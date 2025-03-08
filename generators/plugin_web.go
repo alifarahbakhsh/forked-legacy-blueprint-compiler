@@ -3,8 +3,8 @@ package generators
 import (
 	"errors"
 
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/generators/netgen"
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/parser"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/generators/netgen"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/parser"
 )
 
 type WebServerModifier struct {

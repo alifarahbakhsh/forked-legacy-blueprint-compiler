@@ -2,7 +2,7 @@
 package proc3
 
 import (
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/stdlib"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/stdlib"
 	"context"
 	"strconv"
 	"spec/services"

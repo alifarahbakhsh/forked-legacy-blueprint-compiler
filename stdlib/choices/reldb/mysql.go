@@ -4,7 +4,7 @@ import (
 	"database/sql"
 
 	_ "github.com/go-sql-driver/mysql"
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/stdlib/components"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/stdlib/components"
 )
 
 func GetMySQL(addr, port string) *MySqlDB {

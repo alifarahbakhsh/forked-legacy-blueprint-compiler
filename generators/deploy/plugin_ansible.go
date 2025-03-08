@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	cp "github.com/otiai10/copy"
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/parser"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/parser"
 )
 
 //? This part will need refactoring

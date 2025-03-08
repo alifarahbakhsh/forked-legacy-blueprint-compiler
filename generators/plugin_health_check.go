@@ -3,7 +3,7 @@ package generators
 import (
 	"strings"
 
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/parser"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/parser"
 )
 
 type HealthCheckModifier struct {

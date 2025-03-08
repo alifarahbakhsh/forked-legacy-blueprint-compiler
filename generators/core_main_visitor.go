@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"strings"
 
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/generators/deploy"
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/generators/netgen"
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/parser"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/generators/deploy"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/generators/netgen"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/parser"
 
 	"golang.org/x/mod/modfile"
 )
@@ -90,7 +90,7 @@ func (v *MainVisitor) modifySpecModFile() {
 	}
 	f.Module.Mod.Path = "spec"
 	f.Module.Syntax.Token = []string{"module", "spec"}
-	err = f.AddRequire("gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler", VERSION)
+	err = f.AddRequire("github.com/alifarahbakhsh/forked-legacy-blueprint-compiler", VERSION)
 	if err != nil {
 		v.logger.Fatal(err)
 	}
@@ -245,7 +245,7 @@ func (v *MainVisitor) generateModFile(ctr_dir string, n *DockerContainerNode) {
 	if err != nil {
 		v.logger.Fatal(err)
 	}
-	err = f.AddRequire("gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler", VERSION)
+	err = f.AddRequire("github.com/alifarahbakhsh/forked-legacy-blueprint-compiler", VERSION)
 	if err != nil {
 		v.logger.Fatal(err)
 	}

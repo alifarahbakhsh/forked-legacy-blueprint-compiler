@@ -1,7 +1,7 @@
 package generators
 
 import (
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/parser"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/parser"
 )
 
 // Source: https://stackoverflow.com/questions/23057785/how-to-copy-a-map

@@ -5,7 +5,7 @@ go 1.18
 require (
 	gen-go/leaf v1.0.0
 	github.com/jinzhu/copier v0.3.5
-	gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler v0.0.1
+	github.com/alifarahbakhsh/forked-legacy-blueprint-compiler v0.0.1
 	go.opentelemetry.io/otel/trace v1.6.0
 	google.golang.org/grpc v1.41.0
 	spec v1.0.0

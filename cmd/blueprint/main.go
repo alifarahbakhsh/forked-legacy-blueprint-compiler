@@ -7,9 +7,9 @@ import (
 	"log"
 	"os"
 
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/generators"
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/generators/deploy"
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/parser"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/generators"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/generators/deploy"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/parser"
 
 	progressbar "github.com/schollz/progressbar/v3"
 )

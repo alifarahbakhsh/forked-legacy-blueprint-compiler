@@ -3,7 +3,7 @@ package netgen
 import (
 	"fmt"
 
-	"gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/parser"
+	"github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/parser"
 )
 
 func generateMetricMethod(handler_name string, service_name string, func_names []string) (parser.FuncInfo, string) {
@@ -51,7 +51,7 @@ func generateMetricFields(func_names []string) []parser.ArgInfo {
 
 func generateMetricImports() []parser.ImportInfo {
 	var imports []parser.ImportInfo
-	imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/stdlib/debug"})
+	imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "github.com/alifarahbakhsh/forked-legacy-blueprint-compiler/stdlib/debug"})
 	imports = append(imports, parser.ImportInfo{ImportName: "", FullName: "time"})
 	return imports
 }
