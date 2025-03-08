@@ -1,3 +1,6 @@
+# Disclaimer
+I don't own the code here; I copied it from an [existing Gitlab repository](https://gitlab.mpi-sws.org/cld/blueprint/blueprint-compiler/-/tree/main?ref_type=heads) to conduct some experiments.
+
 # Blueprint
 
 This is the legacy Blueprint implementation, used as the artifact for the 2023 SOSP paper.
