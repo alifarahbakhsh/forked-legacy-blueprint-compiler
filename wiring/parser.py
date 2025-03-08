@@ -2,6 +2,7 @@ import ast
 import os
 from .dataModels import ProcessInfo, ServiceParameterInfo, ModifierInfo, ModifierListInfo, ModifierLambdaInfo, ServiceInstance
 from enum import Enum, auto
+from pprint import pprint
 
 class AnnotationType(Enum):
     NORMAL = auto()
@@ -130,10 +131,22 @@ class WiringDataCollector(ast.NodeVisitor):
         elif isinstance(annotation, ast.Subscript):
             if annotation.value.id == 'List':
                 annotation_type = AnnotationType.LIST
-                abstract_types += [annotation.slice.value.id]
+                ########### TODO:
+                print("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
+                pprint(vars(annotation.slice))
+                #abstract_types += [annotation.slice.value.id]
+                abstract_types += [annotation.slice.id]
             elif annotation.value.id == 'Callable':
                 annotation_type = AnnotationType.LAMBDA
-                abstract_types += [annotation.slice.value.elts[1]]
+                ########### TODO:
+                print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+                pprint(vars(annotation))
+                pprint(vars(annotation.slice))
+                for ali in annotation.slice.elts:
+                    pprint(vars(ali))
+                ########### TODO:
+                #abstract_types += [annotation.slice.value.elts[1]]
+                abstract_types += [annotation.slice.elts[1]]
             else:
                 raise InvalidAnnotationTypeError(annotation.lineno, annotation.value.id)
         else:
@@ -245,7 +258,11 @@ class WiringDataCollector(ast.NodeVisitor):
             elif isinstance(lambda_result_node, ast.Subscript):
                 if lambda_result_node.value.id != 'List':
                     raise InvalidWiringSyntaxError(node.lineno, "Lambda annotaiton type must produce a Modifier or a List[Modifier]")
-                if lambda_result_node.slice.value.id != 'Modifier':
+                print("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
+                pprint(vars(lambda_result_node.slice))
+                ########### TODO:
+                #if lambda_result_node.slice.value.id != 'Modifier':
+                if lambda_result_node.slice.id != 'Modifier':
                     raise InvalidWiringSyntaxError(node.lineno, "Lambda annotaiton type must produce a Modifier or a List[Modifier]")
             modifier_lambda = ModifierLambdaInfo(instance_name, node.value)
             self.defined_modifier_lambdas[instance_name] = modifier_lambda
